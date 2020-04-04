@@ -1,7 +1,6 @@
 # 3rd party modules
 import pygame
 import tcod as libtcod
-
 # Game files
 import constants
 
@@ -248,9 +247,25 @@ def draw_map(map_to_draw):
                         SURFACE_MAIN.blit(constants.S_FLOOR_EXPLORED, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
                     
                     
+def draw_text(display_surface, test_to_display, T_coords, text_color):
+    """"This function takes in some text, and displays it on the reference surface."""
 
+    text_surf, text_rect = helper_text_objects()
+    
+    
+    
+    
+    
 
+#  _   _      _                 
+# | | | | ___| |_ __   ___ _ __ 
+# | |_| |/ _ \ | '_ \ / _ \ '__|
+# |  _  |  __/ | |_) |  __/ |   
+# |_| |_|\___|_| .__/ \___|_|   
+#              |_|              
 
+def helper_text_objects(incoming_text, incoming_color):
+    
 
 
 

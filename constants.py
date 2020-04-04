@@ -55,3 +55,6 @@ S_FLOOR_EXPLORED.fill ((40,50,60), special_flags=pygame.BLEND_RGBA_MULT)
 FOV_ALGO = libtcod.FOV_BASIC
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
+
+# FONTS
+FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.tff")
