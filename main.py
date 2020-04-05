@@ -6,13 +6,12 @@ import constants
 
 # Global constants
 SURFACE_MAIN = None
-GAME_MAP = None
 PLAYER = None
 ENEMY = None
-GAME_OBJECTS = None
 FOV_MAP = None
 FOV_CALCULATE = None
-
+CLOCK = None
+GAME = None
 
 
 
@@ -63,7 +62,15 @@ class ObjActor:
             SURFACE_MAIN.blit(self.sprite, ( self.x*constants.CELL_WIDTH, self.y*constants.CELL_HEIGHT))
         
 
-
+class ObjGame:
+    def __init__(self):
+        self.current_map = map_create()
+        self.current_objects = []
+        
+        self.message_history = []        
+        
+        
+        
 
 #   ____ ___  __  __ ____   ___  _   _ _____ _   _ _____ ____  
 #  / ___/ _ \|  \/  |  _ \ / _ \| \ | | ____| \ | |_   _/ ___| 
@@ -83,12 +90,12 @@ class CompCreature:
     
     def move(self, dx, dy):
         # Is a wall if block_path is true
-        tile_is_wall = (GAME_MAP[self.owner.x + dx][self.owner.y +dy].block_path == True)
+        tile_is_wall = (GAME.current_map[self.owner.x + dx][self.owner.y +dy].block_path == True)
         
         target = map_check_for_creature(self.owner.x + dx, self.owner.y + dy, self.owner)
         
         if target:
-            self.attack(target, 3)
+            self.attack(target, 2)
         
         # Move if current position plus new position is not wall
         if not tile_is_wall and target is None:
@@ -97,12 +104,12 @@ class CompCreature:
     
     
     def attack(self, target, damage):
-        print(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage)} damage!")
+        game_message(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage)} damage!", constants.COLOR_WHITE)
         target.creature.take_damage(damage)
     
     def take_damage(self, damage):
         self.hp -= damage
-        print(f"{self.name_instance}'s health is {str(self.hp)}/{str(self.maxhp)}.")
+        game_message(f"{self.name_instance}'s health is {str(self.hp)}/{str(self.maxhp)}.", constants.COLOR_RED)
         
         if self.hp <= 0:
             if self.death_function is not None:
@@ -136,7 +143,7 @@ class AiTest:
 
 def death_monster(monster):
     """On death, monster stop moving."""
-    print(f"{monster.creature.name_instance} is death!")
+    game_message(f"{monster.creature.name_instance} is death!", constants.COLOR_GREY)
 
     monster.creature = None
     monster.ai = None
@@ -172,7 +179,7 @@ def map_create():
 
 def map_check_for_creature(xPos, yPos, exclude_object = None):
     
-    for obj in GAME_OBJECTS:
+    for obj in GAME.current_objects:
         if (obj is not exclude_object and 
             obj.x == xPos and 
             obj.y == yPos and 
@@ -211,11 +218,15 @@ def draw_game():
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
     
     # draw the map
-    draw_map(GAME_MAP)
+    draw_map(GAME.current_map)
     
     # draw all objects
-    for obj in GAME_OBJECTS:
+    for obj in GAME.current_objects:
         obj.draw()  
+    
+    draw_debug()
+    draw_messages()
+    
     
     # Update the display
     pygame.display.flip()
@@ -247,10 +258,32 @@ def draw_map(map_to_draw):
                         SURFACE_MAIN.blit(constants.S_FLOOR_EXPLORED, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
                     
                     
-def draw_text(display_surface, test_to_display, T_coords, text_color):
+
+def draw_debug():
+    
+    draw_text(SURFACE_MAIN, "fps:" + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, constants.COLOR_BLACK)
+
+
+def draw_messages():
+    to_draw = GAME.message_history[-(constants.NUM_MESSAGES):]
+    
+    text_height = helper_text_height(constants.FONT_MESSAGE_TEXT)
+    
+    start_y = (constants.MAP_HEIGHT*constants.CELL_HEIGHT - (constants.NUM_MESSAGES * text_height)) - 5
+    
+    for i, (message, color) in enumerate(to_draw):
+        draw_text(SURFACE_MAIN, message, (0, start_y + (i * text_height)), color, constants.COLOR_BLACK)
+
+
+
+def draw_text(display_surface, text_to_display, T_coords, text_color, back_color = None):
     """"This function takes in some text, and displays it on the reference surface."""
 
-    text_surf, text_rect = helper_text_objects()
+    text_surf, text_rect = helper_text_objects(text_to_display, text_color, back_color)
+    
+    text_rect.topleft = T_coords
+    
+    display_surface.blit(text_surf, text_rect)
     
     
     
@@ -264,8 +297,24 @@ def draw_text(display_surface, test_to_display, T_coords, text_color):
 # |_| |_|\___|_| .__/ \___|_|   
 #              |_|              
 
-def helper_text_objects(incoming_text, incoming_color):
+def helper_text_objects(incoming_text, incoming_color, incoming_bg):
+    """Render text and gives rect."""
     
+    if incoming_bg:
+        Text_surface = constants.FONT_DEBUG_MESSAGE.render(incoming_text, True, incoming_color, incoming_bg)
+        
+    else: 
+        Text_surface = constants.FONT_DEBUG_MESSAGE.render(incoming_text, True, incoming_color)
+        
+    return Text_surface, Text_surface.get_rect()
+
+def helper_text_height(font):
+    
+    font_object = font.render('a', True, (0, 0, 0))
+    font_rect = font_object.get_rect()
+    
+    return font_rect.height
+
 
 
 
@@ -293,36 +342,36 @@ def game_main_loop():
             game_quit = True
         
         elif player_action != "no-action":
-            for obj in GAME_OBJECTS:
+            for obj in GAME.current_objects:
                 if obj.ai:
                     obj.ai.take_turn()
             
             
-        # TODO draw the game
+        # draw the game
         draw_game()
         
-    # TODO quit the game
+        CLOCK.tick(constants.GAME_FPS)
+        
+    # quit the game
     pygame.quit()
     exit()
     
 
 
-
-
-
-
 def game_initialize():
     """This function initializes the main window, in pygame."""
     
-    global SURFACE_MAIN, GAME_MAP, PLAYER, ENEMY, GAME_OBJECTS, FOV_CALCULATE
+    global SURFACE_MAIN, GAME, CLOCK, FOV_CALCULATE, PLAYER, ENEMY
     
     # initialize pygame
     pygame.init()
     
     SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH, 
-                                            constants.MAP_HEIGHT*constants.CELL_HEIGHT))
-
-    GAME_MAP = map_create()
+                                        constants.MAP_HEIGHT*constants.CELL_HEIGHT))
+    
+    GAME = ObjGame()
+    
+    CLOCK = pygame.time.Clock()
     
     FOV_CALCULATE = True
 
@@ -334,11 +383,7 @@ def game_initialize():
     ENEMY = ObjActor(15, 15, "crab", constants.S_ENEMY,
                     creature = creature_com2, ai= ai_com)
 
-    GAME_OBJECTS = [PLAYER, ENEMY]
-
-
-
-
+    GAME.current_objects = [PLAYER, ENEMY]
 
 
 def game_handle_keys():
@@ -374,6 +419,14 @@ def game_handle_keys():
             
     return "no-action"
             
+
+
+def game_message(game_msg, msg_color):
+    
+    GAME.message_history.append((game_msg, msg_color))
+
+
+
 
 
 #  __  __       _       
