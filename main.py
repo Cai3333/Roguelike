@@ -12,6 +12,7 @@ FOV_MAP = None
 FOV_CALCULATE = None
 CLOCK = None
 GAME = None
+ASSETS = None
 
 
 
@@ -26,8 +27,26 @@ class StrucTile:
         self.block_path = block_path
         self.explored = False
 
+class StrucAssets:
+    def __init__(self):
+        # SPRITESHEETS #
+        self.char_spritesheet = ObjSpritesheet("data/reptiles.png")
+        self.enemy_spritesheet = ObjSpritesheet("data/enemies.png")
+        
+        # ANIMATIONS #
+        self.A_PLAYER = self.char_spritesheet.get_animation('o', 5, 16, 16, 2, (32, 32))
+        self.A_ENEMY = self.enemy_spritesheet.get_animation('k', 1, 16, 16, 2, (32, 32))
 
+        # SPRITES #
+        self.S_WALL = pygame.image.load("data/wall.jpg")
+        self.S_WALL_EXPLORED = pygame.image.load("data/wallunseen2.png")
 
+        self.S_FLOOR = pygame.image.load("data/floor.jpg")
+        self.S_FLOOR_EXPLORED = pygame.image.load("data/floorunseen2.png")
+        
+        # FONTS #
+        self.FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)
+        self.FONT_MESSAGE_TEXT = pygame.font.Font("data/joystix.ttf", 16)
 
 
 
@@ -39,39 +58,119 @@ class StrucTile:
 #           |__/    
 
 class ObjActor:
-    def __init__(self, x, y, name_object, sprite, creature = None, ai = None):
+    def __init__(self, x, y, name_object, animation, animation_speed = .5, creature = None, ai = None, container = None, item = None):
         self.x = x  # Map addres
         self.y = y  # Map addres
-        self.sprite = sprite
+        self.animation = animation # List of images
+        self.animation_speed = animation_speed / 1 # in seconds
+        
+        # animation flicker speed
+        self.flicker_speed = self.animation_speed / len(self.animation)
+        self.flicker_timer = 0.0
+        self.sprite_image = 0
         
         self.creature = creature
-        if creature:
-            creature.owner = self
-
+        if self.creature:
+            self.creature.owner = self
 
         self.ai = ai
+        if self.ai:
+            self.ai.owner = self
         
-        if ai:
-            ai.owner = self
+        self.container = container
+        if self.container:
+            self.container.owner = self
+        
+        self.item = item
+        if self.item:
+            self.item.owner = self
         
     def draw(self):
         # Is visible only if is in fov
         is_visible = libtcod.map_is_in_fov(FOV_MAP, self.x, self.y)
         # draw the character if is visible
         if is_visible:
-            SURFACE_MAIN.blit(self.sprite, ( self.x*constants.CELL_WIDTH, self.y*constants.CELL_HEIGHT))
-        
+            if len(self.animation) == 1:
+                SURFACE_MAIN.blit(self.animation[0], (self.x*constants.CELL_WIDTH, self.y*constants.CELL_HEIGHT))
+                
+            elif len(self.animation) > 1:
+                if CLOCK.get_fps() > 0.0:
+                    self.flicker_timer += 1/CLOCK.get_fps()
+                    
+                if self.flicker_timer >= self.flicker_speed:
+                    self.flicker_timer = 0.0
+                    
+                    if self.sprite_image >= len(self.animation) - 1:
+                        self.sprite_image = 0
+                        
+                    else:
+                        self.sprite_image += 1
+                        
+                SURFACE_MAIN.blit(self.animation[self.sprite_image], 
+                                (self.x*constants.CELL_WIDTH, self.y*constants.CELL_HEIGHT))
+                    
 
 class ObjGame:
     def __init__(self):
         self.current_map = map_create()
         self.current_objects = []
-        
         self.message_history = []        
         
         
         
+class ObjSpritesheet:
+    """class used to grab images out of a spritesheet."""        
+    def __init__(self, file_name):
+        # Load the sprite sheet.
+        self.sprite_sheet = pygame.image.load(file_name).convert()
+        # {'a': 1, 'b': 2...}
+        self.tiledict = {chr(i+96):i for i in range(1,27)}
+        
+    def get_image(self, column, row, width = constants.CELL_WIDTH, height = constants.CELL_HEIGHT,
+                    scale = None):
+        """         Scale is a tuple        """
+        
+        image_list = []
+                    
+        image = pygame.Surface([width, height]).convert()
+        
+        image.blit(self.sprite_sheet, (0,0), (self.tiledict[column]*width, row*height, width, height))
+        
+        image.set_colorkey(constants.COLOR_BLACK)
+            
+        if scale:
+            (new_w, new_h) = scale
+            image = pygame.transform.scale(image, (new_w, new_h))
+            
+        image_list.append(image)
+        
+        return image_list
 
+            
+    def get_animation(self, column, row, width = constants.CELL_WIDTH, height = constants.CELL_HEIGHT,
+                    num_sprites = 1, scale = None):
+        """         Scale is a tuple        """
+        
+        image_list = []
+        
+        for i in range(num_sprites):
+            # Create blank image
+            image = pygame.Surface([width, height]).convert()
+            
+            # copy image from sheet onto blanck
+            image.blit(self.sprite_sheet, (0,0), (self.tiledict[column]*width+(width*i), row*height, width, height))
+            
+            # set transparency key to black
+            image.set_colorkey(constants.COLOR_BLACK)
+            
+            if scale:
+                (new_w, new_h) = scale
+                image = pygame.transform.scale(image, (new_w, new_h))
+                
+            image_list.append(image)
+        
+        return image_list            
+            
 #   ____ ___  __  __ ____   ___  _   _ _____ _   _ _____ ____  
 #  / ___/ _ \|  \/  |  _ \ / _ \| \ | | ____| \ | |_   _/ ___| 
 # | |  | | | | |\/| | |_) | | | |  \| |  _| |  \| | | | \___ \ 
@@ -118,14 +217,53 @@ class CompCreature:
 # TODO class CompItem:
 
 
+class CompContainers:
+    def __init__(self, volume = 10.0, inventory = None):
+        if inventory is None: 
+            self.inventory = []
+        else:    
+            self.inventory = inventory 
+            
+        self.max_volume = volume
+        
+    ## TODO Get Names of everything in inventory
+    
+    ## TODO Get volume within container
+    @property
+    def volume(self):
+        return 0.0
+    
+    ## TODO Get weight of everything in inventory
 
-# TODO class CompContainers:
 
+class CompItem():
+    def __init__(self, weight = 0.0, volume = 0.0):
+        self.weight = weight
+        self.volume = volume
+        
+    def pick_up(self, actor):
+        if actor.container:
+            if actor.container.volume + self.volume > actor.container.max_volume:
+                game_message("Not enough room to pick up")
+                
+            else:
+                game_message("Picking up")
+                actor.container.inventory.append(self.owner)
+                GAME.current_objects.remove(self.owner)
+                self.container = actor.container
 
-
-
-
-
+    def drop(self, new_x, new_y):
+        GAME.current_objects.append(self.owner)
+        self.container.inventory.remove(self.owner)
+        self.owner.x = new_x
+        self.owner.y = new_y
+        game_message("Item dropped!")
+    
+    ## TODO Use this item
+    
+    
+    
+    
 
 
 #     _    ___ 
@@ -175,8 +313,6 @@ def map_create():
     
     return new_map
 
-
-
 def map_check_for_creature(xPos, yPos, exclude_object = None):
     
     for obj in GAME.current_objects:
@@ -204,6 +340,11 @@ def map_calculate_fov():
         FOV_CALCULATE = False
         libtcod.map.Map.compute_fov(FOV_MAP, PLAYER.x, PLAYER.y, constants.TORCH_RADIUS, constants.FOV_LIGHT_WALLS,
             constants.FOV_ALGO)
+
+def map_objects_at_coords(coords_x, coords_y):
+    object_options = [obj for obj in GAME.current_objects
+                        if obj.x == coords_x and obj.y == coords_y] 
+    return object_options
 
 
 #  ____                     _             
@@ -243,38 +384,33 @@ def draw_map(map_to_draw):
                 
                 if map_to_draw[x][y].block_path == True:
                     # Draw wall
-                    SURFACE_MAIN.blit(constants.S_WALL, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
+                    SURFACE_MAIN.blit(ASSETS.S_WALL, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
                 else:
                     # Draw floor
-                    SURFACE_MAIN.blit(constants.S_FLOOR, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
+                    SURFACE_MAIN.blit(ASSETS.S_FLOOR, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
                     
             elif map_to_draw[x][y].explored:
                 
                     if map_to_draw[x][y].block_path == True:
                         # Draw wall
-                        SURFACE_MAIN.blit(constants.S_WALL_EXPLORED, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
+                        SURFACE_MAIN.blit(ASSETS.S_WALL_EXPLORED, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
                     else:
                         # Draw floor
-                        SURFACE_MAIN.blit(constants.S_FLOOR_EXPLORED, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
+                        SURFACE_MAIN.blit(ASSETS.S_FLOOR_EXPLORED, ( x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT ))
                     
-                    
-
 def draw_debug():
     
     draw_text(SURFACE_MAIN, "fps:" + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, constants.COLOR_BLACK)
 
-
 def draw_messages():
     to_draw = GAME.message_history[-(constants.NUM_MESSAGES):]
     
-    text_height = helper_text_height(constants.FONT_MESSAGE_TEXT)
+    text_height = helper_text_height(ASSETS.FONT_MESSAGE_TEXT)
     
-    start_y = (constants.MAP_HEIGHT*constants.CELL_HEIGHT - (constants.NUM_MESSAGES * text_height)) - 5
+    start_y = (constants.MAP_HEIGHT*constants.CELL_HEIGHT - (constants.NUM_MESSAGES * text_height)) - 0
     
     for i, (message, color) in enumerate(to_draw):
         draw_text(SURFACE_MAIN, message, (0, start_y + (i * text_height)), color, constants.COLOR_BLACK)
-
-
 
 def draw_text(display_surface, text_to_display, T_coords, text_color, back_color = None):
     """"This function takes in some text, and displays it on the reference surface."""
@@ -301,10 +437,10 @@ def helper_text_objects(incoming_text, incoming_color, incoming_bg):
     """Render text and gives rect."""
     
     if incoming_bg:
-        Text_surface = constants.FONT_DEBUG_MESSAGE.render(incoming_text, True, incoming_color, incoming_bg)
+        Text_surface = ASSETS.FONT_DEBUG_MESSAGE.render(incoming_text, True, incoming_color, incoming_bg)
         
     else: 
-        Text_surface = constants.FONT_DEBUG_MESSAGE.render(incoming_text, True, incoming_color)
+        Text_surface = ASSETS.FONT_DEBUG_MESSAGE.render(incoming_text, True, incoming_color)
         
     return Text_surface, Text_surface.get_rect()
 
@@ -356,12 +492,10 @@ def game_main_loop():
     pygame.quit()
     exit()
     
-
-
 def game_initialize():
     """This function initializes the main window, in pygame."""
     
-    global SURFACE_MAIN, GAME, CLOCK, FOV_CALCULATE, PLAYER, ENEMY
+    global SURFACE_MAIN, GAME, CLOCK, FOV_CALCULATE, PLAYER, ENEMY, ASSETS
     
     # initialize pygame
     pygame.init()
@@ -374,17 +508,20 @@ def game_initialize():
     CLOCK = pygame.time.Clock()
     
     FOV_CALCULATE = True
-
-    creature_com1 = CompCreature("greg")
-    PLAYER = ObjActor(1, 1, "python", constants.S_PLAYER, creature = creature_com1)
     
+    ASSETS = StrucAssets() 
+    
+    container_com1 = CompContainers()
+    creature_com1 = CompCreature("greg")
+    PLAYER = ObjActor(1, 1, "python", ASSETS.A_PLAYER, animation_speed = 1, creature = creature_com1, container = container_com1)
+    
+    item_com1 = CompItem()
     creature_com2 = CompCreature("jackie", death_function = death_monster)
     ai_com = AiTest()
-    ENEMY = ObjActor(15, 15, "crab", constants.S_ENEMY,
-                    creature = creature_com2, ai= ai_com)
+    ENEMY = ObjActor(15, 15, "crab", ASSETS.A_ENEMY, animation_speed = 1,
+        creature = creature_com2, ai= ai_com, item = item_com1)
 
     GAME.current_objects = [PLAYER, ENEMY]
-
 
 def game_handle_keys():
     global FOV_CALCULATE
@@ -397,6 +534,9 @@ def game_handle_keys():
             return "Quit"
             
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                return "Quit"
+            
             if event.key == pygame.K_UP or event.key == pygame.K_w:
                 PLAYER.creature.move(0, -1)
                 FOV_CALCULATE = True
@@ -417,11 +557,20 @@ def game_handle_keys():
                 FOV_CALCULATE = True
                 return "player-moved"
             
+            if event.key == pygame.K_e:
+                objects_at_player = map_objects_at_coords(PLAYER.x, PLAYER.y)
+                
+                for obj in objects_at_player:
+                    if obj.item:
+                        obj.item.pick_up(PLAYER)
+            
+            if event.key == pygame.K_q:
+                if len(PLAYER.container.inventory) > 0:
+                    PLAYER.container.inventory[-1].item.drop(PLAYER.x, PLAYER.y)
+                    
     return "no-action"
             
-
-
-def game_message(game_msg, msg_color):
+def game_message(game_msg, msg_color = constants.COLOR_GREY):
     
     GAME.message_history.append((game_msg, msg_color))
 

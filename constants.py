@@ -1,7 +1,4 @@
-import pygame
 import tcod as libtcod
-
-pygame.init()
 
 #  ____                           
 # / ___|  ___ _ __ ___  ___ _ __  
@@ -32,38 +29,10 @@ COLOR_RED = (255, 0, 0)
 # Game colors
 COLOR_DEFAULT_BG = COLOR_GREY
 
-
-
-
-#  ____             _ _            
-# / ___| _ __  _ __(_) |_ ___  ___ 
-# \___ \| '_ \| '__| | __/ _ \/ __|
-#  ___) | |_) | |  | | ||  __/\__ \
-# |____/| .__/|_|  |_|\__\___||___/
-#       |_| 
-# Sprites
-S_PLAYER = pygame.image.load("data/python.png")
-S_ENEMY = pygame.image.load("data/crab.png")
-
-
-S_WALL = pygame.image.load("data/wall.jpg")
-S_WALL_EXPLORED = pygame.image.load("data/wall.jpg")
-
-S_FLOOR = pygame.image.load("data/floor.jpg")
-S_FLOOR_EXPLORED = pygame.image.load("data/floor.jpg")
-
-# Dark blue setting of sprite
-S_WALL_EXPLORED.fill ((40,50,60), special_flags=pygame.BLEND_RGBA_MULT)
-S_FLOOR_EXPLORED.fill ((40,50,60), special_flags=pygame.BLEND_RGBA_MULT)
-
 # FOV SETTINGS
 FOV_ALGO = libtcod.FOV_BASIC
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
-
-# FONTS
-FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)
-FONT_MESSAGE_TEXT = pygame.font.Font("data/joystix.ttf", 12)
 
 # MESSAGE DEFAULT
 NUM_MESSAGES = 4
