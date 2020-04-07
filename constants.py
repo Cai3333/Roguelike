@@ -1,4 +1,7 @@
 import tcod as libtcod
+import pygame
+
+pygame.init()
 
 #  ____                           
 # / ___|  ___ _ __ ___  ___ _ __  
@@ -30,9 +33,13 @@ COLOR_RED = (255, 0, 0)
 COLOR_DEFAULT_BG = COLOR_GREY
 
 # FOV SETTINGS
-FOV_ALGO = libtcod.FOV_BASIC
-FOV_LIGHT_WALLS = True
-TORCH_RADIUS = 10
+FOV_ALGO = libtcod.FOV_BASIC  # Algorithm for FOV Calculation
+FOV_LIGHT_WALLS = True        # Does the FOV shine on the walls?
+TORCH_RADIUS = 10             # Sight radius for FOV
 
 # MESSAGE DEFAULT
 NUM_MESSAGES = 4
+
+# FONTS #
+FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)
+FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 14)
