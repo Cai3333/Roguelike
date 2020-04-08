@@ -277,11 +277,11 @@ class CompCreature:
         death_function (arg, function): function to be executed when hp reaches 0.
         current_hp (int): current health of the creature.
     '''
-    def __init__(self, name_instance, hp = 10, death_function = None):
+    def __init__(self, name_instance, max_hp = 10, death_function = None):
         
         self.name_instance = name_instance
-        self.maxhp = hp
-        self.hp = hp
+        self.max_hp = max_hp
+        self.current_hp = max_hp
         self.death_function = death_function
         
     
@@ -329,17 +329,21 @@ class CompCreature:
             damage (int): amount of damage to be applied to self.
         """
         # subtract health
-        self.hp -= damage
+        self.current_hp -= damage
         
         # print message
-        game_message(f"{self.name_instance}'s health is {str(self.hp)}/{str(self.maxhp)}.", constants.COLOR_RED)
+        game_message(f"{self.name_instance}'s health is {str(self.current_hp)}/{str(self.max_hp)}.", constants.COLOR_RED)
         
         # if health now equals < 1, execute death function
-        if self.hp <= 0:
+        if self.current_hp <= 0:
             if self.death_function is not None:
                 self.death_function(self.owner)
-                
-# TODO class CompItem:
+    
+    def heal(self, value):
+        self.current_hp += value
+        
+        if self.current_hp > self.max_hp:
+            self.current_hp = self.max_hp
 
 
 class CompContainers:
@@ -371,9 +375,11 @@ class CompItem():
 
     '''
     
-    def __init__(self, weight = 0.0, volume = 0.0):
+    def __init__(self, weight = 0.0, volume = 0.0, use_function = None, value = None):
         self.weight = weight
         self.volume = volume
+        self.value = value
+        self.use_function = use_function
         
     def pick_up(self, actor):
         '''The item is picked up and placed into an object's inventory.
@@ -408,7 +414,7 @@ class CompItem():
                 GAME.current_objects.remove(self.owner)
                 
                 # tell item what container holds it
-                self.container = actor.container
+                self.current_container = actor.container
 
     def drop(self, new_x, new_y):
         '''Drops the item onto the ground.
@@ -427,7 +433,7 @@ class CompItem():
         GAME.current_objects.append(self.owner)
         
         # remove from the inventory of whatever actor holds it
-        self.container.inventory.remove(self.owner)
+        self.current_container.inventory.remove(self.owner)
         
         # set item location to as defined in the args
         self.owner.x = new_x
@@ -436,11 +442,18 @@ class CompItem():
         # confirm successful placement with game message
         game_message("Item dropped!")
     
-    ## TODO Use this item
+    def use(self):
+        '''Use the item by producing an effect and removing it
+        
+        '''
+        if self.use_function:
+            result = self.use_function(self.current_container.owner, self.value)
     
-    
-    
-    
+            if result is not None:
+                print("use_function failed")
+
+            else:
+                self.current_container.inventory.remove(self.owner)
 
 
 #     _    ___ 
@@ -541,7 +554,7 @@ def map_check_for_creature(xPos, yPos, exclude_object = None):
             obj.creature):
                 return obj
     return None
-
+    
 def map_make_fov(incoming_map):
     '''Creates an FOV map based on a map.
 
@@ -595,6 +608,49 @@ def map_objects_at_coords(coords_x, coords_y):
                         if obj.x == coords_x and obj.y == coords_y] 
     return object_options
 
+def map_find_line(coords1, coords2):
+    '''Converts two x, y coords into a list of tiles.
+    coords1 : (x1, y1)
+    coords2 : (x2, y2)
+    '''
+    
+    x1, y1 = coords1
+    
+    x2, y2 = coords2
+    
+    libtcod.line_init(x1, y1, x2, y2)
+    
+    calc_x, calc_y = libtcod.line_step()
+    
+    coord_list = []
+    
+    if x1 == x2 and y1 == y2:
+        return [(x1, y1)]
+    
+    while (not calc_x is None):
+        coord_list.append((calc_x, calc_y))
+        
+        calc_x, calc_y = libtcod.line_step()
+        
+    return coord_list
+        
+def map_find_radius(coords, radius):
+    center_x, center_y = coords
+    
+    tile_list = []
+    
+    start_x = (center_x - radius)
+    end_x = (center_x + radius + 1)
+    
+    start_y = (center_y - radius) 
+    end_y = (center_y + radius + 1)
+    
+    for x in range(start_x, end_x):
+        for y in range(start_y, end_y):
+            tile_list.append((x, y))
+    return tile_list
+
+
 
 #  ____                     _             
 # |  _ \ _ __ __ ___      _(_)_ __   __ _ 
@@ -633,8 +689,6 @@ def draw_game():
     draw_debug()
     draw_messages()
     
-    # Update the display
-    pygame.display.flip()
 
 def draw_map(map_to_draw):
     '''Main call for drawing a map to the screen.
@@ -735,7 +789,34 @@ def draw_text(display_surface, text_to_display, font, T_coords, text_color, back
     # draw the text onto the display surface.
     display_surface.blit(text_surf, text_rect)
     
+def draw_tile_rect(coords, tile_color = None, tile_alpha = None):
     
+    x, y = coords
+    
+    # Default color
+    if tile_color:
+        local_color = tile_color
+    else:
+        local_color = constants.COLOR_WHITE
+    
+    # Default alpha
+    if tile_alpha:
+        local_alpha = tile_alpha
+    else:
+        local_alpha = 200
+        
+    new_x = x * constants.CELL_WIDTH
+    new_y = y * constants.CELL_WIDTH
+    
+    new_surface = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
+    
+    new_surface.fill(local_color)
+    
+    new_surface.set_alpha(local_alpha)
+    
+    SURFACE_MAIN.blit(new_surface, (new_x, new_y))
+    
+
 
 #  _   _      _                 
 # | | | | ___| |_ __   ___ _ __ 
@@ -813,6 +894,83 @@ def helper_text_width(font):
     return font_rect.width
 
 
+
+
+
+#  __  __    _    ____ ___ ____ 
+# |  \/  |  / \  / ___|_ _/ ___|
+# | |\/| | / _ \| |  _ | | |    
+# | |  | |/ ___ \ |_| || | |___ 
+# |_|  |_/_/   \_\____|___\____|
+
+def cast_heal(target, value):
+    
+    if target.creature.current_hp == target.creature.max_hp:
+        game_message(target.creature.name_instance + " the " + target.name_object + " is already at full health!")
+        return "canceled"
+        
+    else:
+        game_message(target.creature.name_instance + " the " + target.name_object + " healed for " + str(value) + " health!")
+        target.creature.heal(value)
+        print(target.creature.current_hp)
+        
+    return None
+
+def cast_lighting():
+    
+    damage = 5
+    player_location = (PLAYER.x, PLAYER.y)
+    
+    #  prompt the player for a tile
+    point_selected = menu_tile_select(coords_origin = player_location, max_range = 5, penetrate_walls = False)
+    
+    if point_selected:
+        # convert that tile into a list of tiles between A -> B
+        list_of_tiles = map_find_line(player_location, point_selected)
+    
+        # cycle through list, damage everything found 
+        for i, (x, y) in enumerate(list_of_tiles):
+            target = map_check_for_creature(x, y)
+        
+            if target:
+                target.creature.take_damage(damage)
+
+
+def cast_fireball():
+    
+    # defs
+    damage = 5
+    local_radius = 1
+    max_r = 4
+    
+    player_location = (PLAYER.x, PLAYER.y)
+    
+    # get target tile
+    point_selected = menu_tile_select(coords_origin = player_location, 
+                                    max_range = max_r, penetrate_walls = False, 
+                                    pierce_creature = False, radius = local_radius)
+    
+    if point_selected:
+        # get sequence of tiles
+        tiles_to_damage = map_find_radius(point_selected, local_radius)
+        
+        creature_hit = False
+        
+        # damage all creatures in tiles
+        for (x, y) in tiles_to_damage:
+            creature_to_damage = map_check_for_creature(x, y)
+            
+            if creature_to_damage:
+                creature_to_damage.creature.take_damage(damage)
+
+                if creature_to_damage is not PLAYER:
+                    creature_hit = True 
+                    
+        if creature_hit:
+            game_message("The monster Howls out in pain.", constants.COLOR_RED)            
+                
+                
+                
 
 #  __  __                      
 # |  \/  | ___ _ __  _   _ ___ 
@@ -928,7 +1086,7 @@ def menu_invetory():
                     if (mouse_in_window and 
                     mouse_line_selection <= len(print_list) - 1):
                         
-                        PLAYER.container.inventory[mouse_line_selection].item.drop(PLAYER.x, PLAYER.y)
+                        PLAYER.container.inventory[mouse_line_selection].item.use()
                     
         # Draw the list
         for line, (name) in enumerate(print_list):
@@ -948,6 +1106,89 @@ def menu_invetory():
         
         # Update display surface
         pygame.display.update()
+
+def menu_tile_select(coords_origin = None, max_range = None, radius = None,
+                        penetrate_walls = True, pierce_creature = True):
+    ''' This menu let's the player select a tile
+    
+    This function pauses the game, produces an on screen rectangle and when the 
+    player presses left mb, will return (message for now) the map address.
+    '''
+
+    menu_close = False
+    
+    while not menu_close:
+        # Get mos position
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        
+        # Get button click
+        events_list = pygame.event.get()
+        
+        # mouse map selection
+        map_coord_x = int(mouse_x/constants.CELL_WIDTH)
+        map_coord_y = int(mouse_y/constants.CELL_HEIGHT)
+        
+        valid_tiles = []
+        
+        if coords_origin:
+            full_list_tiles = map_find_line(coords_origin, (map_coord_x, map_coord_y))
+            
+            for i, (x,y) in enumerate(full_list_tiles):
+                
+                valid_tiles.append((x, y))
+                
+                # Stop at max range
+                if max_range and i == max_range - 1:
+                    break
+                
+                # Stop at wall    
+                if not penetrate_walls and GAME.current_map[x][y].block_path: 
+                    break
+                    
+                # TODO stop at creature
+                if not pierce_creature and map_check_for_creature(x, y):
+                    break
+                    
+        else:
+            valid_tiles = [(map_coord_x, map_coord_y)]
+                
+        # return map_coords when presses left mb
+        for event in events_list:
+            if event.type == pygame.QUIT:  # QUIT attribute - someone closed window
+                pygame.quit()
+                exit()
+
+            # If press tab again, close menu
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LCTRL:
+                    menu_close = True
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    # returns coordinate selected
+                    return (valid_tiles[-1])
+            
+        # Draw game first
+        draw_game()
+        
+        # Draw rectangle at mouse position
+        for (tile_x, tile_y) in valid_tiles:
+            draw_tile_rect(coords = (tile_x, tile_y))
+        
+        if radius:
+            area_effect = map_find_radius(valid_tiles[-1], radius)
+            
+            for (tile_x, tile_y) in area_effect:
+                draw_tile_rect(coords = (tile_x, tile_y), 
+                                tile_color = constants.COLOR_RED,
+                                tile_alpha = 150)
+        
+        # Update the display
+        pygame.display.flip()
+        
+        # tick the CLOCK
+        CLOCK.tick(constants.GAME_FPS)
+    
 
 
 #   ____                      
@@ -980,6 +1221,11 @@ def game_main_loop():
             
         # draw the game
         draw_game()
+        
+        # Update the display
+        pygame.display.flip()
+        
+        # tick the CLOCK
         CLOCK.tick(constants.GAME_FPS)
         
     # quit the game
@@ -1020,14 +1266,14 @@ def game_initialize():
     PLAYER = ObjActor(1, 1, "Python", ASSETS.A_PLAYER, animation_speed = 1, creature = creature_com1, container = container_com1)
     
     # create lobster 1
-    item_com1 = CompItem()
+    item_com1 = CompItem(value = 4, use_function = cast_heal)
     creature_com2 = CompCreature("Jackie", death_function = death_monster)
     ai_com1 = AiTest()
     ENEMY = ObjActor(15, 15, "Smart crab", ASSETS.A_ENEMY, animation_speed = 1,
         creature = creature_com2, ai= ai_com1, item = item_com1)
 
     # create lobster 2
-    item_com2 = CompItem()
+    item_com2 = CompItem(value = 5, use_function = cast_heal)
     creature_com3 = CompCreature("Bob", death_function = death_monster)
     ai_com2 = AiTest()
     ENEMY2 = ObjActor(14, 15, "Dumb crab", ASSETS.A_ENEMY, animation_speed = 1,
@@ -1097,7 +1343,11 @@ def game_handle_keys():
             # key 'TAB' ->  open inventory menu    
             if event.key == pygame.K_TAB:
                 menu_invetory()
-                    
+            
+            # key 'l.ctrl' -> turn on tile selection
+            if event.key == pygame.K_LCTRL:
+                cast_fireball()
+                        
                     
     return "no-action"
             
