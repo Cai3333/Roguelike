@@ -1,6 +1,8 @@
 # 3rd party modules
 import pygame
 import tcod as libtcod
+import math
+
 # Game files
 import constants
 
@@ -43,20 +45,38 @@ class StrucAssets:
     
     def __init__(self):
         # SPRITESHEETS #
-        self.char_spritesheet = ObjSpritesheet("data/reptiles.png")
-        self.enemy_spritesheet = ObjSpritesheet("data/enemies.png")
+        self.reptile = ObjSpritesheet("data/graphics/Characters/Reptile.png")
+        self.aquatic = ObjSpritesheet("data/graphics/Characters/Aquatic.png")
+        self.wall = ObjSpritesheet("data/graphics/Objects/Wall.png")
+        self.floor = ObjSpritesheet("data/graphics/Objects/Floor.png")
+        
+        self.shield = ObjSpritesheet("data/graphics/Items/Shield.png")
+        self.medwep = ObjSpritesheet("data/graphics/Items/MedWep.png")
+        self.shortwep = ObjSpritesheet("data/graphics/Items/ShortWep.png")
+        self.longwep = ObjSpritesheet("data/graphics/Items/LongWep.png")
+        self.armor = ObjSpritesheet("data/graphics/Items/Armor.png")
         
         # ANIMATIONS #
-        self.A_PLAYER = self.char_spritesheet.get_animation('o', 5, 16, 16, 2, (32, 32))
-        self.A_ENEMY = self.enemy_spritesheet.get_animation('k', 1, 16, 16, 2, (32, 32))
+        self.A_PLAYER = self.reptile.get_animation('o', 5, 16, 16, 2, (32, 32))
+        self.A_ENEMY = self.aquatic.get_animation('k', 1, 16, 16, 2, (32, 32))
 
         # SPRITES #
-        self.S_WALL = pygame.image.load("data/wall.jpg")
-        self.S_WALL_EXPLORED = pygame.image.load("data/wallunseen2.png")
+        self.S_WALL = self.wall.get_image('c', 6, 16, 16,(32, 32))[0]
+        self.S_WALL_EXPLORED = self.wall.get_image('c', 12, 16, 16,(32, 32))[0]
 
-        self.S_FLOOR = pygame.image.load("data/floor.jpg")
-        self.S_FLOOR_EXPLORED = pygame.image.load("data/floorunseen2.png")
+        self.S_FLOOR = self.floor.get_image('a', 7, 16, 16,(32, 32))[0]
+        self.S_FLOOR_EXPLORED = self.floor.get_image('a', 13, 16, 16,(32, 32))[0]
         
+        # Items
+        self.S_SWORD = self.medwep.get_image('`', 0, 16, 16,(32, 32))
+        
+        self.S_DAGGER = self.shortwep.get_image('`', 0, 16, 16,(32, 32))
+        
+        self.S_LONG_SWORD = self.longwep.get_image('`', 0, 16, 16,(32, 32))
+        
+        self.S_SHIELD = self.shield.get_image('`', 0, 16, 16,(32, 32))
+        
+        self.S_ARMOR = self.armor.get_image('`', 0, 16, 16,(32, 32))    
 
 
 
@@ -91,16 +111,21 @@ class ObjActor:
             usable.
     
     '''
-    def __init__(self, x, y, name_object, animation, animation_speed = .5, creature = None, ai = None, container = None, item = None):
+    def __init__(self, x, y, name_object, animation, animation_speed = .5, creature = None, 
+                    ai = None, container = None, item = None, equipment = None):
         self.x = x  # Map addres
         self.y = y  # Map addres
         self.name_object = name_object
         self.animation = animation # List of images
         self.animation_speed = animation_speed / 1 # in seconds
         
-        # animation flicker speed
+        # speed -> frames conversion
         self.flicker_speed = self.animation_speed / len(self.animation)
+        
+        # time for deciding when to flip the image
         self.flicker_timer = 0.0
+        
+        # currently viewed sprite
         self.sprite_image = 0
         
         self.creature = creature
@@ -118,6 +143,24 @@ class ObjActor:
         self.item = item
         if self.item:
             self.item.owner = self
+        
+        self.equipment = equipment
+        if self.equipment:
+            self.equipment.owner = self
+            
+            self.item = CompItem()
+            self.item.owner = self
+            
+    @property
+    def display_name(self):
+        if self.creature:
+            return (self.creature.name_instance + " the " + self.name_object)
+        
+        if self.item:
+            if self.equipment and self.equipment.equipped:
+                return (self.name_object + " (E)")
+            else:
+                return self.name_object
         
     def draw(self):
         '''Draws the object to the screen.
@@ -149,7 +192,24 @@ class ObjActor:
                         
                 SURFACE_MAIN.blit(self.animation[self.sprite_image], 
                                 (self.x*constants.CELL_WIDTH, self.y*constants.CELL_HEIGHT))
+    
+    def distance_to(self, other):
+        dx = other.x - self.x
+        dy = other.y - self.y
+        
+        return math.sqrt(dx ** 2 + dy ** 2)
                     
+    def move_towards(self, other):
+        dx = other.x - self.x
+        dy = other.y - self.y
+        
+        distance = math.sqrt(dx ** 2 + dy ** 2)
+        
+        dx = int(round(dx / distance))
+        dy = int(round(dy / distance))
+        
+        self.creature.move(dx, dy)
+        
 
 class ObjGame:
     '''The ObjGame tracks game progress
@@ -187,6 +247,7 @@ class ObjSpritesheet:
         self.sprite_sheet = pygame.image.load(file_name).convert()
         # {'a': 1, 'b': 2...}
         self.tiledict = {chr(i+96):i for i in range(1,27)}
+        self.tiledict['`'] = 0
         
     def get_image(self, column, row, width = constants.CELL_WIDTH, height = constants.CELL_HEIGHT,
                     scale = None):
@@ -262,6 +323,8 @@ class ObjSpritesheet:
         
         return image_list            
             
+            
+            
 #   ____ ___  __  __ ____   ___  _   _ _____ _   _ _____ ____  
 #  / ___/ _ \|  \/  |  _ \ / _ \| \ | | ____| \ | |_   _/ ___| 
 # | |  | | | | |\/| | |_) | | | |  \| |  _| |  \| | | | \___ \ 
@@ -277,9 +340,11 @@ class CompCreature:
         death_function (arg, function): function to be executed when hp reaches 0.
         current_hp (int): current health of the creature.
     '''
-    def __init__(self, name_instance, max_hp = 10, death_function = None):
+    def __init__(self, name_instance, base_atk = 2, base_def = 0, max_hp = 10, death_function = None):
         
         self.name_instance = name_instance
+        self.base_atk = base_atk
+        self.base_def = base_def
         self.max_hp = max_hp
         self.current_hp = max_hp
         self.death_function = death_function
@@ -299,7 +364,7 @@ class CompCreature:
         target = map_check_for_creature(self.owner.x + dx, self.owner.y + dy, self.owner)
         
         if target:
-            self.attack(target, 2)
+            self.attack(target)
         
         # Move if current position plus new position is not wall
         if not tile_is_wall and target is None:
@@ -307,7 +372,7 @@ class CompCreature:
             self.owner.y += dy
     
     
-    def attack(self, target, damage):
+    def attack(self, target):
         '''Creature makes an attack against another ObjActor
         
         Args:
@@ -316,8 +381,10 @@ class CompCreature:
             damage (int): amount of damage to be done to target
         '''
         
-        game_message(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage)} damage!", constants.COLOR_WHITE)
-        target.creature.take_damage(damage)
+        damage_delt = self.power - target.creature.defense
+        
+        game_message(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage_delt)} damage!", constants.COLOR_WHITE)
+        target.creature.take_damage(damage_delt)
     
     def take_damage(self, damage):
         """Applies damage received to self.health
@@ -345,6 +412,32 @@ class CompCreature:
         if self.current_hp > self.max_hp:
             self.current_hp = self.max_hp
 
+    @property
+    def power(self):
+        total_power = self.base_atk
+        
+        if self.owner.container:
+            object_bonuses = [obj.equipment.attack_bonus 
+                            for obj in self.owner.container.equipped_items]
+
+            for bonus in object_bonuses:
+                if bonus:
+                    total_power += bonus
+        return total_power
+    
+    @property
+    def defense(self):
+        total_defense = self.base_def
+        
+        if self.owner.container:
+            object_bonuses = [obj.equipment.defense_bonus 
+                            for obj in self.owner.container.equipped_items]
+
+            for bonus in object_bonuses:
+                if bonus:
+                    total_defense += bonus
+        
+        return total_defense
 
 class CompContainers:
     
@@ -362,11 +455,19 @@ class CompContainers:
     @property
     def volume(self):
         return 0.0
+
+    @property
+    def equipped_items(self):
+        
+        list_of_equipped_items = [obj for obj in self.inventory 
+                                if obj.equipment and obj.equipment.equipped]
+        
+        return list_of_equipped_items
     
     ## TODO Get weight of everything in inventory
 
 
-class CompItem():
+class CompItem:
     '''Items are components that can be picked up and used.
 
     Attributes:
@@ -446,6 +547,12 @@ class CompItem():
         '''Use the item by producing an effect and removing it
         
         '''
+        
+        if self.owner.equipment:
+            self.owner.equipment.toggle_equip()
+            return 
+            
+        
         if self.use_function:
             result = self.use_function(self.current_container.owner, self.value)
     
@@ -456,20 +563,94 @@ class CompItem():
                 self.current_container.inventory.remove(self.owner)
 
 
+class CompEquipment:
+    def __init__(self, attack_bonus = None, defense_bonus = None, slot = None):
+        self.attack_bonus = attack_bonus
+        self.defense_bonus = defense_bonus
+        self.slot = slot
+        
+        self.equipped = False
+    
+    def toggle_equip(self):
+        if self.equipped:
+            self.unequip()
+        else:
+            self.equip()
+        
+    def equip(self):
+        # Check for equipment in slot
+        all_equipped_items = self.owner.item.current_container.equipped_items
+        
+        for item in all_equipped_items:
+            if item.equipment.slot and (item.equipment.slot == self.slot):
+                game_message("Equipment slot is occupied", constants.COLOR_RED)
+                return
+                
+        
+        self.equipped = True
+        
+        game_message("item equipped")
+        
+    def unequip(self):
+        self.equipped = False
+        game_message("item unequipped")
+        
+        
+
+
 #     _    ___ 
 #    / \  |_ _|
 #   / _ \  | | 
 #  / ___ \ | | 
 # /_/   \_\___|
 
-class AiTest:
+class AiConfuse:
     '''Objects with this ai aimlessly wonder around'''
     
     """Once per turn, execute."""
+    
+    def __init__(self, old_ai, num_turns):
+        self.old_ai = old_ai
+        self.num_turns = num_turns
+        
     def take_turn(self):
-        # Random direction
-        self.owner.creature.move(libtcod.random_get_int(0,-1, 1), libtcod.random_get_int(0,-1, 1))
+        
+        if self.num_turns > 0:
+            # Random direction
+            self.owner.creature.move(libtcod.random_get_int(0,-1, 1), 
+                                    libtcod.random_get_int(0,-1, 1))
+            self.num_turns -= 1
+        
+        else:
+            self.owner.ai = self.old_ai
+            game_message( self.owner.display_name + " has broken free", constants.COLOR_RED)
             
+
+
+class AiChase:
+    '''A basic monster ai which chases and tries to harm player'''
+    
+    def take_turn(self):
+        monster = self.owner
+        
+        if libtcod.map_is_in_fov(FOV_MAP, monster.x, monster.y):
+            # move towards the player if far away
+            if monster.distance_to(PLAYER) >= 2:
+                self.owner.move_towards(PLAYER)
+            
+            # if close enough, attack player
+            elif PLAYER.creature.current_hp > 0:
+                monster.creature.attack(PLAYER)
+
+
+
+
+
+#  ____             _   _     
+# |  _ \  ___  __ _| |_| |__  
+# | | | |/ _ \/ _` | __| '_ \ 
+# | |_| |  __/ (_| | |_| | | |
+# |____/ \___|\__,_|\__|_| |_|
 
 def death_monster(monster):
     """On death, monster stop moving."""
@@ -634,7 +815,8 @@ def map_find_line(coords1, coords2):
         
     return coord_list
         
-def map_find_radius(coords, radius):
+def map_find_radius_box(coords, radius):
+
     center_x, center_y = coords
     
     tile_list = []
@@ -649,6 +831,38 @@ def map_find_radius(coords, radius):
         for y in range(start_y, end_y):
             tile_list.append((x, y))
     return tile_list
+
+def map_find_radius_diamond(coords, radius):
+
+    radius = 2
+    tile_x, tile_y = coords
+    
+    list_of_tiles = []
+    
+    list_of_tiles.append((tile_x,tile_y))
+    for i in range(1,radius+1):
+        list_of_tiles.append((tile_x+i,tile_y))
+        list_of_tiles.append((tile_x-i,tile_y))
+        list_of_tiles.append((tile_x,tile_y-i))
+        list_of_tiles.append((tile_x,tile_y+i))
+        
+    vertical = radius-1
+    horizontal = 1
+    temp_horizontal = horizontal
+    
+    for a in range(vertical):
+        while(temp_horizontal != 0):
+            list_of_tiles.append((tile_x+temp_horizontal,tile_y-vertical))
+            list_of_tiles.append((tile_x-temp_horizontal,tile_y-vertical))   
+            list_of_tiles.append((tile_x+temp_horizontal,tile_y+vertical))
+            list_of_tiles.append((tile_x-temp_horizontal,tile_y+vertical))
+            temp_horizontal -= 1
+            
+        vertical -= 1
+        horizontal += 1
+        temp_horizontal = horizontal
+    return list_of_tiles
+
 
 
 
@@ -763,19 +977,24 @@ def draw_messages():
         draw_text(SURFACE_MAIN, message, constants.FONT_MESSAGE_TEXT, 
                   (0, start_y + (i * text_height)), color, constants.COLOR_BLACK)
 
-def draw_text(display_surface, text_to_display, font, T_coords, text_color, back_color = None):
+def draw_text(display_surface, text_to_display, font, coords, text_color, back_color = None, center = False):
     ''' Displays text on the desired surface. 
 
     Args:
         display_surface (pygame.Surface): the surface the text is to be
             displayed on.
+            
         text_to_display (str): what is the text to be written
+        
         font (pygame.font.Font): font object the text will be written using
+        
         coords ((int, int)): where on the display_surface will the object be
             written, the text will be drawn from the upper left corner of the 
             text.
+            
         text_color ((int, int, int)): (R, G, B) color code for the desired color
             of the text.
+            
         back_color ((int, int, int), optional): (R, G, B) color code for the 
             background.  If not included, the background is transparent.
     '''
@@ -784,12 +1003,15 @@ def draw_text(display_surface, text_to_display, font, T_coords, text_color, back
     text_surf, text_rect = helper_text_objects(text_to_display, font, text_color, back_color)
     
     # adjust the location of the surface based on the coordinates
-    text_rect.topleft = T_coords
-    
+    if not center:
+        text_rect.topleft = coords
+    else:
+        text_rect.center = coords
+        
     # draw the text onto the display surface.
     display_surface.blit(text_surf, text_rect)
     
-def draw_tile_rect(coords, tile_color = None, tile_alpha = None):
+def draw_tile_rect(coords, tile_color = None, tile_alpha = None, mark = None):
     
     x, y = coords
     
@@ -813,6 +1035,11 @@ def draw_tile_rect(coords, tile_color = None, tile_alpha = None):
     new_surface.fill(local_color)
     
     new_surface.set_alpha(local_alpha)
+    
+    if mark:
+        draw_text(new_surface, mark, font = constants.FONT_CURSOR_TEXT,
+                    coords = (constants.CELL_WIDTH /2, constants.CELL_HEIGHT / 2),
+                    text_color = constants.COLOR_BLACK, center = True)
     
     SURFACE_MAIN.blit(new_surface, (new_x, new_y))
     
@@ -935,7 +1162,6 @@ def cast_lighting():
             if target:
                 target.creature.take_damage(damage)
 
-
 def cast_fireball():
     
     # defs
@@ -952,7 +1178,7 @@ def cast_fireball():
     
     if point_selected:
         # get sequence of tiles
-        tiles_to_damage = map_find_radius(point_selected, local_radius)
+        tiles_to_damage = map_find_radius_box(point_selected, local_radius)
         
         creature_hit = False
         
@@ -969,8 +1195,28 @@ def cast_fireball():
         if creature_hit:
             game_message("The monster Howls out in pain.", constants.COLOR_RED)            
                 
-                
-                
+def cast_confusion():
+    
+    # Select tile
+    point_selected = menu_tile_select()
+    
+    # Get target
+    if point_selected:
+        tile_x, tile_y = point_selected
+        target = map_check_for_creature(tile_x, tile_y)
+
+        
+        # Temporarily confuse the target
+        if target:
+            oldai = target.ai
+            
+            target.ai = AiConfuse(old_ai = oldai, num_turns = 5)
+            target.ai.owner = target
+            
+            game_message("The creature's eyes glaze over", constants.COLOR_GREEN) 
+
+
+
 
 #  __  __                      
 # |  \/  | ___ _ __  _   _ ___ 
@@ -1041,7 +1287,7 @@ def menu_invetory():
     menu_y = (window_height / 2) - (menu_height / 2)
     
     # Menu text characteristics
-    menu_text_font = constants.FONT_MESSAGE_TEXT
+    menu_text_font = constants.FONT_INVENTORY
     menu_text_color = constants.COLOR_WHITE
     
     # Helper vars
@@ -1055,7 +1301,7 @@ def menu_invetory():
         local_inv_surface.fill(constants.COLOR_BLACK)
         
         # Collect list of item names
-        print_list = [obj.name_object for obj in PLAYER.container.inventory]
+        print_list = [obj.display_name for obj in PLAYER.container.inventory]
         
         # List of input events
         events_list = pygame.event.get()
@@ -1099,7 +1345,11 @@ def menu_invetory():
                 draw_text(local_inv_surface, name, menu_text_font, 
                         (0, 0 + (line * menu_text_height)), 
                         menu_text_color)
-        # Draw menu
+                
+        # Render the game
+        draw_game()        
+        
+        # Display menu
         SURFACE_MAIN.blit(local_inv_surface, (menu_x, menu_y))
         
         CLOCK.tick(constants.GAME_FPS)
@@ -1173,10 +1423,13 @@ def menu_tile_select(coords_origin = None, max_range = None, radius = None,
         
         # Draw rectangle at mouse position
         for (tile_x, tile_y) in valid_tiles:
-            draw_tile_rect(coords = (tile_x, tile_y))
+            if (tile_x, tile_y) == valid_tiles[-1]:
+                draw_tile_rect(coords = (tile_x, tile_y), mark = "X")
+            else:
+                draw_tile_rect(coords = (tile_x, tile_y))
         
         if radius:
-            area_effect = map_find_radius(valid_tiles[-1], radius)
+            area_effect = map_find_radius_box(valid_tiles[-1], radius)
             
             for (tile_x, tile_y) in area_effect:
                 draw_tile_rect(coords = (tile_x, tile_y), 
@@ -1189,6 +1442,23 @@ def menu_tile_select(coords_origin = None, max_range = None, radius = None,
         # tick the CLOCK
         CLOCK.tick(constants.GAME_FPS)
     
+
+
+
+
+#   ____                           _                 
+#  / ___| ___ _ __   ___ _ __ __ _| |_ ___  _ __ ___ 
+# | |  _ / _ \ '_ \ / _ \ '__/ _` | __/ _ \| '__/ __|
+# | |_| |  __/ | | |  __/ | | (_| | || (_) | |  \__ \
+#  \____|\___|_| |_|\___|_|  \__,_|\__\___/|_|  |___/
+
+
+
+
+
+
+
+
 
 
 #   ____                      
@@ -1262,25 +1532,41 @@ def game_initialize():
     
     # create the player
     container_com1 = CompContainers()
-    creature_com1 = CompCreature("Greg")
+    creature_com1 = CompCreature("Greg", base_atk = 4)
     PLAYER = ObjActor(1, 1, "Python", ASSETS.A_PLAYER, animation_speed = 1, creature = creature_com1, container = container_com1)
     
     # create lobster 1
     item_com1 = CompItem(value = 4, use_function = cast_heal)
     creature_com2 = CompCreature("Jackie", death_function = death_monster)
-    ai_com1 = AiTest()
+    ai_com1 = AiChase()
     ENEMY = ObjActor(15, 15, "Smart crab", ASSETS.A_ENEMY, animation_speed = 1,
         creature = creature_com2, ai= ai_com1, item = item_com1)
 
     # create lobster 2
     item_com2 = CompItem(value = 5, use_function = cast_heal)
     creature_com3 = CompCreature("Bob", death_function = death_monster)
-    ai_com2 = AiTest()
+    ai_com2 = AiChase()
     ENEMY2 = ObjActor(14, 15, "Dumb crab", ASSETS.A_ENEMY, animation_speed = 1,
         creature = creature_com3, ai= ai_com2, item = item_com2)
 
+    # Create a sword
+    equipment_com1 = CompEquipment(attack_bonus = 4, slot = "hand_right")
+    SWORD = ObjActor(2, 2, "Long-sword", ASSETS.S_SWORD, equipment = equipment_com1)
+
+    # Create a dagger
+    equipment_com2 = CompEquipment(attack_bonus = 2, slot = "hand_right")
+    DAGGER = ObjActor(2, 3, "Dagger", ASSETS.S_DAGGER, equipment = equipment_com2)
+    
+    # Create a shield
+    equipment_com3 = CompEquipment(defense_bonus = 2, slot = "hand_left")
+    SHIELD = ObjActor(2, 4, "Shield", ASSETS.S_SHIELD, equipment = equipment_com3)
+
+    # Create a armor
+    equipment_com4 = CompEquipment(defense_bonus = 1, slot = "head")
+    ARMOR = ObjActor(2, 5, "Armor", ASSETS.S_ARMOR, equipment = equipment_com4)
+
     # initialize current_objects list with the PLAYER and both enemies
-    GAME.current_objects = [PLAYER, ENEMY, ENEMY2]
+    GAME.current_objects = [PLAYER, ENEMY, ENEMY2, SWORD, DAGGER, SHIELD, ARMOR]
 
 def game_handle_keys():
     '''Handles player input
@@ -1346,7 +1632,7 @@ def game_handle_keys():
             
             # key 'l.ctrl' -> turn on tile selection
             if event.key == pygame.K_LCTRL:
-                cast_fireball()
+                cast_confusion()
                         
                     
     return "no-action"
