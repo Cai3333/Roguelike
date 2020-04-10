@@ -19,9 +19,18 @@ CELL_HEIGHT =32
 GAME_FPS = 63
 
 
-# Map vars
-MAP_WIDTH = 20
-MAP_HEIGHT = 20
+# Map limitations
+MAP_WIDTH = 45
+MAP_HEIGHT = 25
+MAP_MAX_NUM_ROOMS = 10
+
+
+# Room limitations
+ROOM_MAX_HEIGHT = 7
+ROOM_MAX_WIDTH = 5
+ROOM_MIN_HEIGHT = 3
+ROOM_MIN_WIDTH = 3
+
 
 # Color definitions
 COLOR_BLACK = (0, 0, 0)
@@ -45,4 +54,4 @@ NUM_MESSAGES = 4
 FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)
 FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 14)
 FONT_CURSOR_TEXT = pygame.font.Font("data/joystix.ttf", CELL_HEIGHT)
-FONT_INVENTORY = pygame.font.Font("data/joystix.ttf", 14)
+FONT_INVENTORY = pygame.font.Font("data/joystix.ttf", 12)

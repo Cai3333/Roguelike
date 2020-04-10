@@ -8,13 +8,12 @@ import constants
 
 # Global constants
 SURFACE_MAIN = None
-PLAYER = None
-ENEMY = None
 FOV_MAP = None
 FOV_CALCULATE = None
 CLOCK = None
 GAME = None
 ASSETS = None
+PLAYER = None
 
 
 
@@ -55,10 +54,13 @@ class StrucAssets:
         self.shortwep = ObjSpritesheet("data/graphics/Items/ShortWep.png")
         self.longwep = ObjSpritesheet("data/graphics/Items/LongWep.png")
         self.armor = ObjSpritesheet("data/graphics/Items/Armor.png")
+        self.scroll = ObjSpritesheet("data/graphics/Items/Scroll.png")
+        self.flesh = ObjSpritesheet("data/graphics/Items/Flesh.png")
         
         # ANIMATIONS #
         self.A_PLAYER = self.reptile.get_animation('o', 5, 16, 16, 2, (32, 32))
-        self.A_ENEMY = self.aquatic.get_animation('k', 1, 16, 16, 2, (32, 32))
+        self.A_SNAKE_01 = self.reptile.get_animation('e', 5, 16, 16, 2, (32, 32))
+        self.A_SNAKE_02 = self.reptile.get_animation('k', 5, 16, 16, 2, (32, 32))
 
         # SPRITES #
         self.S_WALL = self.wall.get_image('c', 6, 16, 16,(32, 32))[0]
@@ -68,17 +70,24 @@ class StrucAssets:
         self.S_FLOOR_EXPLORED = self.floor.get_image('a', 13, 16, 16,(32, 32))[0]
         
         # Items
-        self.S_SWORD = self.medwep.get_image('`', 0, 16, 16,(32, 32))
+        self.S_SWORD = self.medwep.get_image(0, 0, 16, 16,(32, 32))
+        self.S_DAGGER = self.shortwep.get_image(0, 0, 16, 16,(32, 32))
+        self.S_LONG_SWORD = self.longwep.get_image('c', 4, 16, 16,(32, 32))
         
-        self.S_DAGGER = self.shortwep.get_image('`', 0, 16, 16,(32, 32))
+        self.S_SHIELD = self.shield.get_image(0, 0, 16, 16,(32, 32))
+        self.S_STRONG_SHIELD = self.shield.get_image('f', 0, 16, 16,(32, 32))
         
-        self.S_LONG_SWORD = self.longwep.get_image('`', 0, 16, 16,(32, 32))
+        self.S_ARMOR = self.armor.get_image(0, 0, 16, 16,(32, 32))
+        self.S_STRONG_ARMOR = self.armor.get_image('f', 6, 16, 16,(32, 32))
         
-        self.S_SHIELD = self.shield.get_image('`', 0, 16, 16,(32, 32))
+        self.S_SCROLL_01 = self.scroll.get_image('d', 0, 16, 16,(32, 32))       
+        self.S_SCROLL_02 = self.scroll.get_image('b', 1, 16, 16,(32, 32))
+        self.S_SCROLL_03 = self.scroll.get_image('c', 5, 16, 16,(32, 32))    
+        self.S_SCROLL_04 = self.scroll.get_image('c', 0, 16, 16,(32, 32))
         
-        self.S_ARMOR = self.armor.get_image('`', 0, 16, 16,(32, 32))    
-
-
+        self.S_FLESH_01 = self.flesh.get_image('a', 3, 16, 16,(32, 32))
+        
+        
 
 #   ___  _     _           _       
 #  / _ \| |__ (_) ___  ___| |_ ___ 
@@ -158,7 +167,7 @@ class ObjActor:
         
         if self.item:
             if self.equipment and self.equipment.equipped:
-                return (self.name_object + " (E)")
+                return (self.name_object + "  (E)")
             else:
                 return self.name_object
         
@@ -225,7 +234,6 @@ class ObjGame:
             to the player over the course of a game.'''
             
     def __init__(self):
-        self.current_map = map_create()
         self.current_objects = []
         self.message_history = []        
         
@@ -247,7 +255,7 @@ class ObjSpritesheet:
         self.sprite_sheet = pygame.image.load(file_name).convert()
         # {'a': 1, 'b': 2...}
         self.tiledict = {chr(i+96):i for i in range(1,27)}
-        self.tiledict['`'] = 0
+        self.tiledict[0] = 0
         
     def get_image(self, column, row, width = constants.CELL_WIDTH, height = constants.CELL_HEIGHT,
                     scale = None):
@@ -323,7 +331,36 @@ class ObjSpritesheet:
         
         return image_list            
             
-            
+
+
+class ObjRoom:
+    '''This is a rectangle that lives on the map'''
+    
+    def __init__(self, coords, size):
+        self.x1, self.y1 = coords
+        self.w, self.h = size
+        
+        self.x2 = self.x1 + self.w
+        self.y2 = self.y1 + self.h
+        
+    @property
+    def center(self):
+        center_x = (self.x1 + self.x2) // 2
+        center_y = (self.y1 + self.y2) // 2
+        
+        return (center_x, center_y)
+        
+    def intersect(self, other):
+        # Return True if other obj intersects with this one
+        objects_intersect = (self.x1 <= other.x2 and self.x2 >= other.x1 and 
+                            self.y1 <= other.y2 and self.y2 >= other.y1)
+        return objects_intersect
+        
+    
+    
+    
+
+
             
 #   ____ ___  __  __ ____   ___  _   _ _____ _   _ _____ ____  
 #  / ___/ _ \|  \/  |  _ \ / _ \| \ | | ____| \ | |_   _/ ___| 
@@ -383,6 +420,9 @@ class CompCreature:
         
         damage_delt = self.power - target.creature.defense
         
+        if damage_delt < 0:
+            damage_delt = 0
+        
         game_message(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage_delt)} damage!", constants.COLOR_WHITE)
         target.creature.take_damage(damage_delt)
     
@@ -396,7 +436,13 @@ class CompCreature:
             damage (int): amount of damage to be applied to self.
         """
         # subtract health
+        if damage < 0:
+            damage = 0
+            
         self.current_hp -= damage
+        
+        if self.current_hp < 0:
+            self.current_hp = 0
         
         # print message
         game_message(f"{self.name_instance}'s health is {str(self.current_hp)}/{str(self.max_hp)}.", constants.COLOR_RED)
@@ -652,13 +698,14 @@ class AiChase:
 # | |_| |  __/ (_| | |_| | | |
 # |____/ \___|\__,_|\__|_| |_|
 
-def death_monster(monster):
+def death_snake(monster):
     """On death, monster stop moving."""
     
     # print message alerting player that creature has died
     game_message(f"{monster.creature.name_instance} is death!", constants.COLOR_GREY)
 
     # remove ai and creature components
+    monster.animation = ASSETS.S_FLESH_01
     monster.creature = None
     monster.ai = None
     
@@ -686,28 +733,95 @@ def map_create():
     '''
     
     # initializes an empty map
-    new_map = [[StrucTile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
+    new_map = [[StrucTile(True) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
     
-    # creates 2 walls, one at (10, 10) and the other at (10, 15)
-    new_map[10][10].block_path = True
-    new_map[10][15].block_path = True
+    # generate new room
+    list_of_rooms = []
     
-    # goes through map, sets left and right most tiles to walls
-    for x in range(constants.MAP_WIDTH):
-        new_map[x][0].block_path = True
-        new_map[x][constants.MAP_HEIGHT -1].block_path = True
+    for i in range(constants.MAP_MAX_NUM_ROOMS):
+        
+        w = libtcod.random_get_int(0, constants.ROOM_MIN_WIDTH, constants.ROOM_MAX_WIDTH)
+        h = libtcod.random_get_int(0, constants.ROOM_MIN_HEIGHT, constants.ROOM_MAX_HEIGHT)
+                
+        x = libtcod.random_get_int(0, 2, constants.MAP_WIDTH - w - 2)
+        y = libtcod.random_get_int(0, 2, constants.MAP_HEIGHT - h - 2)
     
-    # goes through map, sets top and bottom most tiles to walls
-    for y in range(constants.MAP_HEIGHT):
-        new_map[0][y].block_path = True
-        new_map[constants.MAP_HEIGHT -1][y].block_path = True
-    
+        # Create room
+        new_room = ObjRoom((x, y), (w, h))
+        
+        failed = False
+        
+        # check for interference
+        for other_room in list_of_rooms:
+            if new_room.intersect(other_room):
+                failed = True
+                break
+        if not failed:
+            # place the room
+            map_create_room(new_map, new_room)
+            current_center = new_room.center
+            
+            if len(list_of_rooms) == 0:
+                gen_player(current_center)
+                
+            else:
+                previous_center = list_of_rooms[-1].center
+                
+                # dig tunnels
+                map_create_tunnels(current_center, previous_center, new_map)
+            
+            list_of_rooms.append(new_room)
+            
     # create FOV_MAP
     map_make_fov(new_map)
     
     # returns the created map
-    return new_map
+    return (new_map, list_of_rooms)
 
+def map_place_objects(room_list):
+    
+    for room in room_list:
+        x = libtcod.random_get_int(0, room.x1, room.x2 -1)
+        y = libtcod.random_get_int(0, room.y1, room.y2 -1)
+        
+        if (x, y) != (PLAYER.x, PLAYER.y):
+            gen_enemy((x, y))
+            
+        x2 = libtcod.random_get_int(0, room.x1, room.x2 -1)
+        y2 = libtcod.random_get_int(0, room.y1, room.y2 -1)
+        
+        if (x2, y2) != (PLAYER.x, PLAYER.y) and (x2, y2) != (x, y):
+            gen_item((x2, y2))
+
+def map_create_room(new_map, new_room):
+    
+    for x in range(new_room.x1, new_room.x2):
+        for y in range(new_room.y1, new_room.y2):
+            
+            new_map[x][y].block_path = False
+            
+def map_create_tunnels(coords1, coords2, new_map):
+    coin_flip = (libtcod.random_get_int(0, 0, 1) == 1)
+    
+    x1, y1 = coords1
+    x2, y2 = coords2
+
+    if coin_flip:
+        
+        for x in range(min(x1, x2), max(x1, x2) + 1):
+            new_map[x][y1].block_path = False
+            
+        for y in range(min(y1, y2), max(y1, y2) + 1):
+            new_map[x2][y].block_path = False
+            
+    else: 
+        
+        for y in range(min(y1, y2), max(y1, y2) + 1):
+            new_map[x1][y].block_path = False
+
+        for x in range(min(x1, x2), max(x1, x2) + 1):
+            new_map[x][y2].block_path = False
+        
 def map_check_for_creature(xPos, yPos, exclude_object = None):
     '''Check the current map for creatures at specified location.
 
@@ -834,7 +948,6 @@ def map_find_radius_box(coords, radius):
 
 def map_find_radius_diamond(coords, radius):
 
-    radius = 2
     tile_x, tile_y = coords
     
     list_of_tiles = []
@@ -1143,13 +1256,14 @@ def cast_heal(target, value):
         
     return None
 
-def cast_lighting():
+def cast_lighting(caster, T_damage_maxrange):
     
-    damage = 5
-    player_location = (PLAYER.x, PLAYER.y)
+    damage, m_range= T_damage_maxrange
+    
+    player_location = (caster.x, caster.y)
     
     #  prompt the player for a tile
-    point_selected = menu_tile_select(coords_origin = player_location, max_range = 5, penetrate_walls = False)
+    point_selected = menu_tile_select(coords_origin = player_location, max_range = m_range, penetrate_walls = False)
     
     if point_selected:
         # convert that tile into a list of tiles between A -> B
@@ -1162,19 +1276,17 @@ def cast_lighting():
             if target:
                 target.creature.take_damage(damage)
 
-def cast_fireball():
+def cast_fireball_box(caster, T_damage_radius_range):
     
     # defs
-    damage = 5
-    local_radius = 1
-    max_r = 4
+    damage, local_radius, max_r = T_damage_radius_range
     
-    player_location = (PLAYER.x, PLAYER.y)
+    player_location = (caster.x, caster.y)
     
     # get target tile
     point_selected = menu_tile_select(coords_origin = player_location, 
                                     max_range = max_r, penetrate_walls = False, 
-                                    pierce_creature = False, radius = local_radius)
+                                    pierce_creature = False, radius_box = local_radius)
     
     if point_selected:
         # get sequence of tiles
@@ -1193,9 +1305,41 @@ def cast_fireball():
                     creature_hit = True 
                     
         if creature_hit:
-            game_message("The monster Howls out in pain.", constants.COLOR_RED)            
+            game_message("The monster Howls out in pain.", constants.COLOR_RED)
+            
+def cast_fireball_diamond(caster, T_damage_radius_range):
+    
+    # defs
+    damage, local_radius, max_r = T_damage_radius_range
+    
+    player_location = (caster.x, caster.y)
+    
+    # get target tile
+    point_selected = menu_tile_select(coords_origin = player_location, 
+                                    max_range = max_r, penetrate_walls = False, 
+                                    pierce_creature = False, radius_diamond = local_radius)
+    
+    if point_selected:
+        # get sequence of tiles
+        tiles_to_damage = map_find_radius_diamond(point_selected, local_radius)
+        
+        creature_hit = False
+        
+        # damage all creatures in tiles
+        for (x, y) in tiles_to_damage:
+            creature_to_damage = map_check_for_creature(x, y)
+            
+            if creature_to_damage:
+                creature_to_damage.creature.take_damage(damage)
+
+                if creature_to_damage is not PLAYER:
+                    creature_hit = True 
+                    
+        if creature_hit:
+            game_message("The monster Howls out in pain.", constants.COLOR_RED)  
+                        
                 
-def cast_confusion():
+def cast_confusion(caster, effect_length):
     
     # Select tile
     point_selected = menu_tile_select()
@@ -1210,7 +1354,7 @@ def cast_confusion():
         if target:
             oldai = target.ai
             
-            target.ai = AiConfuse(old_ai = oldai, num_turns = 5)
+            target.ai = AiConfuse(old_ai = oldai, num_turns = effect_length)
             target.ai.owner = target
             
             game_message("The creature's eyes glaze over", constants.COLOR_GREEN) 
@@ -1266,7 +1410,7 @@ def menu_pause():
         # Update the display surface
         pygame.display.flip()
 
-def menu_invetory():
+def menu_inventory():
     """Opens the inventory menu.
     
     The inventory allows the player to examine whatever items they are 
@@ -1333,6 +1477,7 @@ def menu_invetory():
                     mouse_line_selection <= len(print_list) - 1):
                         
                         PLAYER.container.inventory[mouse_line_selection].item.use()
+                        menu_close = True
                     
         # Draw the list
         for line, (name) in enumerate(print_list):
@@ -1357,7 +1502,7 @@ def menu_invetory():
         # Update display surface
         pygame.display.update()
 
-def menu_tile_select(coords_origin = None, max_range = None, radius = None,
+def menu_tile_select(coords_origin = None, max_range = None, radius_box = None, radius_diamond = None,
                         penetrate_walls = True, pierce_creature = True):
     ''' This menu let's the player select a tile
     
@@ -1428,8 +1573,16 @@ def menu_tile_select(coords_origin = None, max_range = None, radius = None,
             else:
                 draw_tile_rect(coords = (tile_x, tile_y))
         
-        if radius:
-            area_effect = map_find_radius_box(valid_tiles[-1], radius)
+        if radius_box:
+            area_effect = map_find_radius_box(valid_tiles[-1], radius_box)
+            
+            for (tile_x, tile_y) in area_effect:
+                draw_tile_rect(coords = (tile_x, tile_y), 
+                                tile_color = constants.COLOR_RED,
+                                tile_alpha = 150)
+                
+        elif radius_diamond:
+            area_effect = map_find_radius_diamond(valid_tiles[-1], radius_diamond)
             
             for (tile_x, tile_y) in area_effect:
                 draw_tile_rect(coords = (tile_x, tile_y), 
@@ -1452,11 +1605,259 @@ def menu_tile_select(coords_origin = None, max_range = None, radius = None,
 # | |_| |  __/ | | |  __/ | | (_| | || (_) | |  \__ \
 #  \____|\___|_| |_|\___|_|  \__,_|\__\___/|_|  |___/
 
+# Player
+def gen_player(coords):
+    global PLAYER
+    
+    x, y = coords
+    
+    # create the player
+    container_com = CompContainers()
+    creature_com = CompCreature("Greg", base_atk = 4, max_hp = 30)
+    PLAYER = ObjActor(x, y, "Python", 
+                    ASSETS.A_PLAYER, animation_speed = 1,
+                    creature = creature_com, 
+                    container = container_com)
+    
+    GAME.current_objects.append(PLAYER)
+
+# Items
+def gen_item(coords):
+    
+    random_num = libtcod.random_get_int(0, 1, 100)
+    
+    if random_num in range(1, 11): 
+        new_item = gen_scroll_lightning(coords)
+        
+    elif random_num in range(11, 21): 
+        new_item = gen_scroll_fireball_box(coords)
+        
+    elif random_num in range(21, 31): 
+        new_item = gen_scroll_confusion(coords)
+        
+    elif random_num in range(31, 36): 
+        new_item = gen_scroll_fireball_diamond(coords)
+    
+    elif random_num in range(36, 46):
+        new_item = gen_weapon_sword(coords)
+        
+    elif random_num in range(46, 56):
+        new_item = gen_armor_shield(coords)
+        
+    elif random_num in range(56, 66):
+        new_item = gen_weapon_dagger(coords)
+
+    elif random_num in range(66, 71):
+        new_item = gen_weapon_scythe(coords)
+    
+    elif random_num in range(71, 81):   
+        new_item = gen_armor_shield(coords)
+        
+    elif random_num in range(81, 86):   
+        new_item = gen_armor_shield_diamond(coords)
+        
+    elif random_num in range(86, 91):   
+        new_item = gen_armor_body_diamond(coords)
+
+    elif random_num in range(91, 101):   
+        new_item = gen_armor_body(coords)
+        
+    GAME.current_objects.insert(0, new_item)
+        
+def gen_scroll_lightning(coords):
+
+    x, y = coords
+
+    damage = libtcod.random_get_int(0, 8, 10)
+    m_range = libtcod.random_get_int(0, 8, 9)
+    
+
+    item_com = CompItem(use_function = cast_lighting, value = (damage, m_range))
+    
+    return_object = ObjActor(x, y, "Lightning scroll", animation = ASSETS.S_SCROLL_01, item = item_com)
+    
+    return return_object
+
+def gen_scroll_fireball_box(coords):
+
+    x, y = coords
+
+    damage = libtcod.random_get_int(0, 6, 8)
+    radius = 1
+    m_range = libtcod.random_get_int(0, 7, 8)
+    
+
+    item_com = CompItem(use_function = cast_fireball_box, value = (damage, radius, m_range))
+    
+    return_object = ObjActor(x, y, "Fireball-box scroll", animation = ASSETS.S_SCROLL_02, item = item_com)
+    
+    return return_object
+
+def gen_scroll_fireball_diamond(coords):
+
+    x, y = coords
+
+    damage = libtcod.random_get_int(0, 7, 10)
+    radius = 2
+    m_range = libtcod.random_get_int(0, 5, 9)
+    
+
+    item_com = CompItem(use_function = cast_fireball_diamond, value = (damage, radius, m_range))
+    
+    return_object = ObjActor(x, y, "Fireball-diamond scroll", animation = ASSETS.S_SCROLL_04, item = item_com)
+    
+    return return_object
+
+def gen_scroll_confusion(coords):
+
+    x, y = coords
+
+    effect_length = libtcod.random_get_int(0, 5, 8) 
+
+    item_com = CompItem(use_function = cast_confusion, value = effect_length)
+    
+    return_object = ObjActor(x, y, "Confusion scroll", animation = ASSETS.S_SCROLL_03, item = item_com)
+    
+    return return_object
+
+def gen_weapon_sword(coords):
+    x, y = coords
+    
+    bonus = libtcod.random_get_int(0, 4, 6)
+    
+    equipment_com = CompEquipment(attack_bonus = bonus, slot = "hand_right")
+    
+    return_object = ObjActor(x, y, "Sword", animation = ASSETS.S_SWORD, equipment = equipment_com)
+    
+    return return_object
+
+def gen_weapon_scythe(coords):
+    x, y = coords
+    
+    bonus = libtcod.random_get_int(0, 10, 15)
+    
+    equipment_com = CompEquipment(attack_bonus = bonus, slot = "hand_right")
+    
+    return_object = ObjActor(x, y, "Scythe", animation = ASSETS.S_LONG_SWORD, equipment = equipment_com)
+    
+    return return_object
+
+def gen_weapon_dagger(coords):
+    x, y = coords
+    
+    bonus = libtcod.random_get_int(0, 2, 5)
+    
+    equipment_com = CompEquipment(attack_bonus = bonus, slot = "hand_right")
+    
+    return_object = ObjActor(x, y, "Dagger", animation = ASSETS.S_DAGGER, equipment = equipment_com)
+    
+    return return_object
+
+def gen_armor_shield_diamond(coords):
+    x, y = coords
+    
+    bonus = libtcod.random_get_int(0, 8, 12)
+    
+    equipment_com = CompEquipment(defense_bonus = bonus, slot = "hand_left")
+    
+    return_object = ObjActor(x, y, "Diamond shield", animation = ASSETS.S_STRONG_SHIELD, equipment = equipment_com)
+    
+    return return_object
+
+def gen_armor_shield(coords):
+    x, y = coords
+    
+    bonus = libtcod.random_get_int(0, 2, 5)
+    
+    equipment_com = CompEquipment(defense_bonus = bonus, slot = "hand_left")
+    
+    return_object = ObjActor(x, y, "Shield", animation = ASSETS.S_SHIELD, equipment = equipment_com)
+    
+    return return_object
+
+def gen_armor_body(coords):
+    x, y = coords
+    
+    bonus = 4
+    
+    equipment_com = CompEquipment(defense_bonus = bonus, slot = "body")
+    
+    return_object = ObjActor(x, y, "Armor", animation = ASSETS.S_ARMOR, equipment = equipment_com)
+    
+    return return_object
+
+def gen_armor_body_diamond(coords):
+    x, y = coords
+    
+    bonus = 8
+    
+    equipment_com = CompEquipment(defense_bonus = bonus, slot = "body")
+    
+    return_object = ObjActor(x, y, "Diamond armor", animation = ASSETS.S_STRONG_ARMOR, equipment = equipment_com)
+    
+    return return_object
 
 
+# Enemies
+def gen_enemy(coords):
+    random_num = libtcod.random_get_int(0, 1, 100)
+    
+    if random_num in range(1, 16): 
+        new_enemy = gen_snake_cobra(coords)
+        
+    elif random_num in range(16, 101): 
+        new_enemy = gen_snake_anaconda(coords)
+        
+    elif random_num in range(101, 150): 
+        new_enemy = gen_snake_cobra(coords)
+        
+    elif random_num in range(150, 200): 
+        new_enemy = gen_snake_cobra(coords)
+        
+    GAME.current_objects.insert(-1, new_enemy)
+    
+    
+def gen_snake_anaconda(coords):
+    
+    x, y = coords
+    
+    max_health = libtcod.random_get_int(0, 5, 8)
+    base_attack = libtcod.random_get_int(0, 2, 4)
+    
+    creature_name = libtcod.namegen_generate('Celtic female')
+    
+    creature_com = CompCreature(creature_name, death_function = death_snake, 
+                                base_atk = base_attack, max_hp = max_health)
+    
+    ai_com = AiChase()
+    snake = ObjActor(x, y, "Anaconda", 
+                    ASSETS.A_SNAKE_01, 
+                    animation_speed = 1, 
+                    creature = creature_com, 
+                    ai= ai_com)
+    
+    return snake
+    
+def gen_snake_cobra(coords):
 
-
-
+    x, y = coords
+    
+    max_health = libtcod.random_get_int(0, 15, 20)
+    base_attack = libtcod.random_get_int(0, 5, 8)
+    
+    creature_name = libtcod.namegen_generate('Celtic male')
+    
+    creature_com = CompCreature(creature_name,death_function = death_snake, 
+                                base_atk = base_attack, max_hp = max_health)
+    
+    ai_com = AiChase()
+    snake = ObjActor(x, y, "Cobra", 
+                    ASSETS.A_SNAKE_02, 
+                    animation_speed = 1, 
+                    creature = creature_com, 
+                    ai= ai_com)
+    
+    return snake
 
 
 
@@ -1505,21 +1906,32 @@ def game_main_loop():
 def game_initialize():
     """This function initializes the main window, in pygame."""
     
-    global SURFACE_MAIN, GAME, CLOCK, FOV_CALCULATE, PLAYER, ENEMY, ASSETS
+    global SURFACE_MAIN, GAME, CLOCK, FOV_CALCULATE, ASSETS
     
     # initialize pygame
     pygame.init()
     
-    pygame.key.set_repeat(250,150)
-
+    pygame.key.set_repeat(200,75)
+    
+    libtcod.namegen_parse('data/namegen/jice_celtic.cfg')
+    libtcod.namegen_parse('data/namegen/jice_fantasy.cfg')
+    libtcod.namegen_parse('data/namegen/jice_mesopotamian.cfg')
+    
     # SURFACE_MAIN is the display surface, a special surface that serves as the
     # root console of the whole game.  Anything that appears in the game must be
     # drawn to this console before it will appear.
     SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH, 
                                         constants.MAP_HEIGHT*constants.CELL_HEIGHT))
     
+    # ASSETS stores the games assets
+    ASSETS = StrucAssets() 
+    
     # GAME tracks game progress
     GAME = ObjGame()
+    
+    GAME.current_map, GAME.current_rooms = map_create()
+    
+    map_place_objects(GAME.current_rooms)
     
     # The CLOCK tracks and limits cpu cycles
     CLOCK = pygame.time.Clock()
@@ -1527,46 +1939,7 @@ def game_initialize():
     # when FOV_CALCULATE is true, FOV recalculates
     FOV_CALCULATE = True
     
-    # ASSETS stores the games assets
-    ASSETS = StrucAssets() 
-    
-    # create the player
-    container_com1 = CompContainers()
-    creature_com1 = CompCreature("Greg", base_atk = 4)
-    PLAYER = ObjActor(1, 1, "Python", ASSETS.A_PLAYER, animation_speed = 1, creature = creature_com1, container = container_com1)
-    
-    # create lobster 1
-    item_com1 = CompItem(value = 4, use_function = cast_heal)
-    creature_com2 = CompCreature("Jackie", death_function = death_monster)
-    ai_com1 = AiChase()
-    ENEMY = ObjActor(15, 15, "Smart crab", ASSETS.A_ENEMY, animation_speed = 1,
-        creature = creature_com2, ai= ai_com1, item = item_com1)
 
-    # create lobster 2
-    item_com2 = CompItem(value = 5, use_function = cast_heal)
-    creature_com3 = CompCreature("Bob", death_function = death_monster)
-    ai_com2 = AiChase()
-    ENEMY2 = ObjActor(14, 15, "Dumb crab", ASSETS.A_ENEMY, animation_speed = 1,
-        creature = creature_com3, ai= ai_com2, item = item_com2)
-
-    # Create a sword
-    equipment_com1 = CompEquipment(attack_bonus = 4, slot = "hand_right")
-    SWORD = ObjActor(2, 2, "Long-sword", ASSETS.S_SWORD, equipment = equipment_com1)
-
-    # Create a dagger
-    equipment_com2 = CompEquipment(attack_bonus = 2, slot = "hand_right")
-    DAGGER = ObjActor(2, 3, "Dagger", ASSETS.S_DAGGER, equipment = equipment_com2)
-    
-    # Create a shield
-    equipment_com3 = CompEquipment(defense_bonus = 2, slot = "hand_left")
-    SHIELD = ObjActor(2, 4, "Shield", ASSETS.S_SHIELD, equipment = equipment_com3)
-
-    # Create a armor
-    equipment_com4 = CompEquipment(defense_bonus = 1, slot = "head")
-    ARMOR = ObjActor(2, 5, "Armor", ASSETS.S_ARMOR, equipment = equipment_com4)
-
-    # initialize current_objects list with the PLAYER and both enemies
-    GAME.current_objects = [PLAYER, ENEMY, ENEMY2, SWORD, DAGGER, SHIELD, ARMOR]
 
 def game_handle_keys():
     '''Handles player input
@@ -1628,7 +2001,7 @@ def game_handle_keys():
             
             # key 'TAB' ->  open inventory menu    
             if event.key == pygame.K_TAB:
-                menu_invetory()
+                menu_inventory()
             
             # key 'l.ctrl' -> turn on tile selection
             if event.key == pygame.K_LCTRL:
