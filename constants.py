@@ -10,8 +10,8 @@ pygame.init()
 # |____/ \___|_|  \___|\___|_| |_|
 
 # Game sizes
-GAME_WIDTH = 800
-GAME_HEIGHT = 600
+CAMERA_WIDTH = 800
+CAMERA_HEIGHT = 600
 CELL_WIDTH = 32
 CELL_HEIGHT =32
 
@@ -20,9 +20,9 @@ GAME_FPS = 63
 
 
 # Map limitations
-MAP_WIDTH = 45
-MAP_HEIGHT = 25
-MAP_MAX_NUM_ROOMS = 10
+MAP_WIDTH = 30
+MAP_HEIGHT = 30
+MAP_MAX_NUM_ROOMS = 3
 
 
 # Room limitations
@@ -48,10 +48,10 @@ FOV_LIGHT_WALLS = True        # Does the FOV shine on the walls?
 TORCH_RADIUS = 10             # Sight radius for FOV
 
 # MESSAGE DEFAULT
-NUM_MESSAGES = 4
+NUM_MESSAGES = 6
 
 # FONTS #
 FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)
-FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 14)
+FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 12)
 FONT_CURSOR_TEXT = pygame.font.Font("data/joystix.ttf", CELL_HEIGHT)
 FONT_INVENTORY = pygame.font.Font("data/joystix.ttf", 12)
