@@ -4,6 +4,7 @@ import tcod as libtcod
 import math
 import _pickle as pickle
 import gzip
+import random
 
 # Game files
 import constants
@@ -18,7 +19,7 @@ GAME = None
 ASSETS = None
 PLAYER = None
 CAMERA = None
-
+RANDOM_ENGINE = None
 
 
 #  ____  _                   _   
@@ -30,11 +31,9 @@ CAMERA = None
 class StrucTile:
     '''This class functions as a struct that tracks the data for each
     tile within a map.
-
     Attributes:
     block_path (arg, bool): TRUE if tile prevents actors from moving
     through it under normal circumstances.
-
     explored (bool): Initializes to FALSE, set to true if player
     has seen it before.'''
     
@@ -50,6 +49,7 @@ class StrucAssets:
         # SPRITESHEETS #
         self.reptile = ObjSpritesheet("data/graphics/Characters/Reptile.png")
         self.aquatic = ObjSpritesheet("data/graphics/Characters/Aquatic.png")
+        self.rodent = ObjSpritesheet("data/graphics/Characters/Rodent.png")
         self.wall = ObjSpritesheet("data/graphics/Objects/Wall.png")
         self.floor = ObjSpritesheet("data/graphics/Objects/Floor.png")
         self.tile = ObjSpritesheet("data/graphics/Objects/Tile.png")
@@ -66,6 +66,7 @@ class StrucAssets:
         self.A_PLAYER = self.reptile.get_animation('o', 5, 16, 16, 2, (32, 32))
         self.A_SNAKE_01 = self.reptile.get_animation('e', 5, 16, 16, 2, (32, 32))
         self.A_SNAKE_02 = self.reptile.get_animation('k', 5, 16, 16, 2, (32, 32))
+        self.A_MOUSE = self.rodent.get_animation(0, 0, 16, 16, 2, (32, 32))
 
         # SPRITES #
         self.S_WALL = self.wall.get_image('c', 6, 16, 16,(32, 32))[0]
@@ -102,7 +103,8 @@ class StrucAssets:
             # ANIMATIONS #
             'A_PLAYER' : self.A_PLAYER,
             'A_SNAKE_01' : self.A_SNAKE_01,
-            'A_SNAKE_02' : self.A_SNAKE_02, 
+            'A_SNAKE_02' : self.A_SNAKE_02,
+            'A_MOUSE' : self.A_MOUSE,  
             
             # Items
             'S_SWORD' : self.S_SWORD,
@@ -121,6 +123,7 @@ class StrucAssets:
             'S_SCROLL_04' : self.S_SCROLL_04, 
             
             'S_FLESH_01' : self.S_FLESH_01,
+            'S_FLESH_02' : self.S_FLESH_02,
             
             # SPECIAL
             'S_STAIRS_DOWN' : self.S_STAIRS_DOWN,
@@ -128,6 +131,19 @@ class StrucAssets:
             
         }
 
+        # AUDIO
+        
+        self.music_background = 'data/audio/music/forest-temple.mp3'
+        self.music_menu = 'data/audio/music/Title Theme.mp3'
+        
+        self.snd_hit_1 = pygame.mixer.Sound('data/audio/sound-effects/Hit_1.wav')
+        self.snd_hit_2 = pygame.mixer.Sound('data/audio/sound-effects/Hit_2.wav')
+        self.snd_hit_3 = pygame.mixer.Sound('data/audio/sound-effects/Hit_3.wav')
+        self.snd_hit_4 = pygame.mixer.Sound('data/audio/sound-effects/Hit_4.wav')
+        
+        self.snd_list_hit = [self.snd_hit_1, self.snd_hit_2, self.snd_hit_3, self.snd_hit_4]
+        
+        
 #   ___  _     _           _       
 #  / _ \| |__ (_) ___  ___| |_ ___ 
 # | | | | '_ \| |/ _ \/ __| __/ __|
@@ -137,10 +153,8 @@ class StrucAssets:
 
 class ObjActor:
     '''The actor object represents every entity in the game.
-
     This object is anything that can appear or act within the game.  Each entity 
     is made up of components that control how these objects work.
-
     Attributes:
         x (arg, int): position on the x axis
         y (arg, int): position on the y axis
@@ -150,7 +164,6 @@ class ObjActor:
             spritesheet. Created within the struc_Assets class.
         animation_speed (arg, float): time in seconds it takes to loop through
             the object animation.
-
     Components:
         creature: any object that has health, and generally can fight.
         ai: set of instructions an ObjActor can follow.
@@ -216,11 +229,9 @@ class ObjActor:
         
     def draw(self):
         '''Draws the object to the screen.
-
         This function draws the object to the screen if it appears within the 
         PLAYER fov.  It also keeps track of the timing for animations to trigger
         a transition to the next sprite in the animation.
-
         '''
         
         is_visible = libtcod.map_is_in_fov(FOV_MAP, self.x, self.y)
@@ -281,11 +292,9 @@ class ObjActor:
         
 class ObjGame:
     '''The ObjGame tracks game progress
-
     This is an object that stores all the information used by the game to 'keep 
     track' of progress.  It tracks maps, objects, and game history or record of 
     messages.
-
     Attributes:
         current_map (obj): whatever map is currently loaded.
         current_objects (list): list of objects for the current map.
@@ -357,7 +366,6 @@ class ObjGame:
 class ObjSpritesheet:
     '''Class used to grab images out of a sprite sheet.  As a class, it allows 
     you to access and subdivide portions of the sprite_sheet.
-
     Attributes:
         file_name (arg, str): String which contains the directory/filename of 
             the image for use as a spritesheet.
@@ -384,7 +392,6 @@ class ObjSpritesheet:
             height (int): individual sprite height in pixels
             scale ((width, height)) = If included, scales the sprites to a new 
                 size.
-
         Returns:
             image_list (list): This method returns a single sprite contained 
                 within a list loaded from the spritesheet property.
@@ -420,7 +427,6 @@ class ObjSpritesheet:
             num_sprites (int): number of sprites to be loaded in sequence.
             scale ((width, height)) = If included, scales the sprites to a new 
                 size.
-
         Returns:
             image_list (list): This method returns a sequence of sprites 
                 contained within a list loaded from the spritesheet property.
@@ -544,7 +550,6 @@ class ObjCamera:
 
 class CompCreature:
     '''Creatures are actors that have health and can fight.
-
     Attributes:
         name_instance (arg, str): name of instance. "Bob" for example.
         max_hp (arg, int): max health of the creature.
@@ -596,9 +601,14 @@ class CompCreature:
         
         if damage_delt < 0:
             damage_delt = 0
-        
+            
+        if damage_delt > 0 and self.owner is PLAYER:
+            pygame.mixer.Sound.play(RANDOM_ENGINE.choice(ASSETS.snd_list_hit))
+            
         game_message(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage_delt)} damage!", constants.COLOR_WHITE)
+            
         target.creature.take_damage(damage_delt)
+            
     
     def take_damage(self, damage):
         """Applies damage received to self.health
@@ -688,11 +698,9 @@ class CompContainers:
 
 class CompItem:
     '''Items are components that can be picked up and used.
-
     Attributes:
         weight (arg, float): how much does the item weigh
         volume (arg, float): how much space does the item take up
-
     '''
     
     def __init__(self, weight = 0.0, volume = 0.0, use_function = None, value = None):
@@ -703,14 +711,11 @@ class CompItem:
         
     def pick_up(self, actor):
         '''The item is picked up and placed into an object's inventory.
-
         When called, this method seeks to place the item into an object's 
         inventory if there is room.  It then removes the item from a Game's 
         current_objects list.
-
         Args:
             actor (ObjActor): the object that is picking up the item.
-
         '''
         
         if actor.container: # first, checks for container component
@@ -739,15 +744,12 @@ class CompItem:
 
     def drop(self, new_x, new_y):
         '''Drops the item onto the ground.
-
         This method removes the item from the actor.container inventory and 
         places it into the GAME.current_objects list.  Drops the item at the
         location defined in the args.
-
         Args:
             new_x (int): x coord on the map to drop item
             new_y (int): y coord on the map to drop item
-
         '''
         
         # add this item to tracked objects
@@ -920,16 +922,12 @@ def death_mouse(mouse):
 
 def map_create():
     '''Creates the default map.
-
     Currently, the map this function creatures is a small room with 2 pillars 
     within it.  It is a testing map.
-
     Returns:
         new_map (array): This array is populated with struc_Tile objects.
-
     Effects:
         Calls map_make_fov on new_map to preemptively create the fov.
-
     '''
     
     # initializes an empty map
@@ -1035,21 +1033,17 @@ def map_create_tunnels(coords1, coords2, new_map):
         
 def map_check_for_creature(xPos, yPos, exclude_object = None):
     '''Check the current map for creatures at specified location.
-
     This function looks at that location for any object that has a creature
     component and returns it.  Optional argument allows user to exclude an 
     object from the search, usually the Player
-
     Args:
         x (int): x map coord to check for creature
         y (int): y map coord to check for creature
         exclude_object(ObjActor, optional): if an object is passed into this 
             function, this object will be ignored by the search.
-
     Returns: 
         target (ObjActor): but only if found at the location specified in the 
             arguments and if not excluded.
-
     '''
     
     # check objectlist to find creature at that location that isn't excluded
@@ -1063,13 +1057,10 @@ def map_check_for_creature(xPos, yPos, exclude_object = None):
     
 def map_make_fov(incoming_map):
     '''Creates an FOV map based on a map.
-
     Args:
         incoming_map (array): map, usually created with map_create
-
     Effects:
         generates the FOV_MAP
-
     '''
     
     global FOV_MAP
@@ -1083,10 +1074,8 @@ def map_make_fov(incoming_map):
     
 def map_calculate_fov():
     '''Calculates the FOV based on the Player's perspective.
-
     Accesses the global variable FOV_CALCULATE, if FOV_CALCULATE is True, sets 
     it to False and recalculates the FOV.
-
     '''    
 
     global FOV_CALCULATE
@@ -1101,11 +1090,9 @@ def map_calculate_fov():
 
 def map_objects_at_coords(coords_x, coords_y):
     '''Get a list of every object at a coordinate.
-
     Args: 
         coords_x (int): x axis map coordinate of current map to check
         coords_y (int): y axis map coordinate of current map to check
-
     Returns:
         object_options (list): list of every object at the coordinate.
     '''    
@@ -1199,11 +1186,9 @@ def map_find_radius_diamond(coords, radius):
 
 def draw_game():
     '''Main call for drawing the entirity of the game.
-
     This method is responsible for regularly drawing the whole game.  It starts
     by clearing the main surface, then draws elements of the screen from front
     to back.
-
     The order of operations is:
     1) Clear the screen
     2) Draw the map
@@ -1211,7 +1196,6 @@ def draw_game():
     4) Draw the debug console
     5) Draw the messages console
     6) Update the display
-
     '''
     
     # clear the surface
@@ -1235,14 +1219,11 @@ def draw_game():
 
 def draw_map(map_to_draw):
     '''Main call for drawing a map to the screen.
-
     draw_map loops through every tile within the map and draws it's 
     corresponding tile to the screen.
-
     Args:
         map_to_draw (array): the map to draw in the background.  Under most
             circumstances, should be the GAME.current_map object.
-
     '''
         
     cam_x, cam_y = CAMERA.map_address
@@ -1297,20 +1278,16 @@ def draw_map(map_to_draw):
                     
 def draw_debug():
     '''Draw the debug console to the display surface.
-
     This method draws a debug console to the upper left corner of the window.
     For now, this debug console is limited to the current FPS.
-
     '''    
     
     draw_text(SURFACE_MAIN, "fps:" + str(int(CLOCK.get_fps())), constants.FONT_DEBUG_MESSAGE, (0,0), constants.COLOR_WHITE, constants.COLOR_BLACK)
 
 def draw_messages():
     '''Draw the messages console to the display surface.
-
     This method generates a list of messages to display in the lower left-hand
     corner of the display surface, and then displays them.
-
     '''
 
     # if the number of messages available is < than the number of messages we
@@ -1327,7 +1304,6 @@ def draw_messages():
 
 def draw_text(display_surface, text_to_display, font, coords, text_color, back_color = None, center = False):
     ''' Displays text on the desired surface. 
-
     Args:
         display_surface (pygame.Surface): the surface the text is to be
             displayed on.
@@ -1402,17 +1378,14 @@ def draw_tile_rect(coords, tile_color = None, tile_alpha = None, mark = None):
 
 def helper_text_objects(incoming_text, incoming_font, incoming_color, incoming_bg):
     '''Generates the text objects used for drawing text.
-
     This function is most often used in conjuction with the draw_text method.  
     It generates the text objects used by draw_text to actually display whatever
     string is called by the method.
-
     Args:
         incoming_text (str):
         incoming_font (pygame.font.Font):
         incoming_color ((int, int, int)):
         incoming_bg ((int, int, int), optional):
-
     Returns:
         Text_surface (pygame.Surface):
         Text_surface.get_rect() (pygame.Rect): 
@@ -1429,14 +1402,11 @@ def helper_text_objects(incoming_text, incoming_font, incoming_color, incoming_b
 
 def helper_text_height(font):
     '''Measures the height in pixels of a specified font.
-
     This method is used when you need the height of a font object.  Most often
     this is useful when designing UI elements where the exact height of a font 
     needs to be known.
-
     Args:
         font (pygame.font.Font): the font whose height is desired.
-
     Returns:
         font_rect.height (int): the height, in pixels, of the font.
     '''
@@ -1449,17 +1419,13 @@ def helper_text_height(font):
 
 def helper_text_width(font):
     '''Measures the width in pixels of a specified font.
-
     This method is used when you need the width of a font object.  Most often
     this is useful when designing UI elements where the exact width of a font 
     needs to be known.
-
     Args:
         font (pygame.font.Font): the font whose width is desired.
-
     Returns:
         font_rect.width (int): the width, in pixels, of the font.
-
     '''
     
     # render the font out
@@ -1596,11 +1562,130 @@ def cast_confusion(caster, effect_length):
 
 
 
+
+
+#  _   _ ___ 
+# | | | |_ _|
+# | | | || | 
+# | |_| || | 
+#  \___/|___|
+
+class UiButton:
+    def __init__(self, surface, button_text, size, center_coords, 
+                color_box_mouseover = constants.COLOR_RED, 
+                color_box_default = constants.COLOR_GREEN, 
+                color_text_mouseover = constants.COLOR_GREY, 
+                color_text_default = constants.COLOR_GREY):
+
+        self.surface = surface
+        self.button_text = button_text
+        self.size = size
+        self.center_coords = center_coords
+        
+        self.c_box_mo = color_box_mouseover
+        self.c_box_default = color_box_default
+        self.c_text_mo = color_text_mouseover
+        self.c_text_default = color_text_default
+        self.c_c_box = color_box_default
+        self.c_c_text = color_text_default
+        
+        self.rect = pygame.Rect((0, 0), size)
+        self.rect.center = center_coords
+        
+    
+    def update(self, player_input):
+        mouse_clicked = False
+        local_events, local_mousepos = player_input
+        mouse_x, mouse_y = local_mousepos
+        
+        mouse_over = (mouse_x >= self.rect.left
+                    and mouse_x <= self.rect.right
+                    and mouse_y >= self.rect.top
+                    and mouse_y <= self.rect.bottom)
+        
+        for event in local_events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_clicked = True
+                    
+        if mouse_over and mouse_clicked:
+            return True
+        
+        if mouse_over:
+            self.c_c_box = self.c_box_mo
+            self.c_c_text = self.c_text_mo
+            
+        else: 
+            self.c_c_box = self.c_box_default
+            self.c_c_text = self.c_text_default
+        
+    def draw(self):
+        pygame.draw.rect(self.surface, self.c_c_box, self.rect)
+        draw_text(self.surface, self.button_text, constants.FONT_DEBUG_MESSAGE, self.center_coords, self.c_c_text, center = True)
+    
+
+
+
+
+
+
+
 #  __  __                      
 # |  \/  | ___ _ __  _   _ ___ 
 # | |\/| |/ _ \ '_ \| | | / __|
 # | |  | |  __/ | | | |_| \__ \
 # |_|  |_|\___|_| |_|\__,_|___/
+
+def menu_main():
+    
+    game_initialize()
+    
+    menu_running = True
+    
+    # Start menu music
+    pygame.mixer.music.load(ASSETS.music_menu)
+    pygame.mixer.music.play(-1)
+    
+    title_x = constants.CAMERA_WIDTH/2 
+    title_y = constants.CAMERA_HEIGHT / 2 - 40
+    title_text = "Python - RL"
+    
+    # draw menu
+    SURFACE_MAIN.fill(constants.COLOR_BLACK)
+    draw_text(SURFACE_MAIN, title_text, constants.FONT_TITLE, (title_x, title_y - 20), constants.COLOR_RED, center = True)
+    
+    test_button = UiButton(SURFACE_MAIN, 'START GAME', (150, 30), (title_x, title_y + 40))
+
+    
+    while menu_running:
+        
+        list_of_events = pygame.event.get()
+        mouse_position = pygame.mouse.get_pos()
+        
+        game_input = (list_of_events, mouse_position)
+        
+        # Handle menu events
+        for event in list_of_events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+                
+        # Button updates
+        if test_button.update(game_input):
+            
+            # Stop music menu
+            pygame.mixer.music.stop()
+            
+            # Start music game
+            pygame.mixer.music.load(ASSETS.music_background)
+            pygame.mixer.music.play(-1)
+            
+            game_start()
+        
+        test_button.draw()
+        
+        # update surface
+        pygame.display.update()
 
 def menu_pause():
     """This menu pauses the game and displays a simple message."""
@@ -1930,7 +2015,7 @@ def gen_item(coords):
     elif random_num in range(91, 101):   
         new_item = gen_armor_body(coords)
         
-    GAME.current_objects.insert(-1, new_item)
+    GAME.current_objects.insert(0, new_item)
 
 def gen_scroll_lightning(coords):
 
@@ -2073,16 +2158,16 @@ def gen_enemy(coords):
     if random_num in range(1, 16): 
         new_enemy = gen_snake_cobra(coords)
         
-    elif random_num in range(16, 101): 
+    elif random_num in range(16, 51): 
         new_enemy = gen_snake_anaconda(coords)
         
-    elif random_num in range(101, 150): 
-        new_enemy = gen_snake_cobra(coords)
+    elif random_num in range(51, 101): 
+        new_enemy = gen_mouse(coords)
         
     elif random_num in range(150, 200): 
         new_enemy = gen_snake_cobra(coords)
         
-    GAME.current_objects.insert(0, new_enemy)
+    GAME.current_objects.insert(-1, new_enemy)
     
     
 def gen_snake_anaconda(coords):
@@ -2138,14 +2223,18 @@ def gen_mouse(coords):
     creature_com = CompCreature(creature_name,death_function = death_mouse, 
                                 base_atk = base_attack, max_hp = max_health)
     
-    ai_com = AiChase()
-    snake = ObjActor(x, y, "mouse", 
-                    animation_key = "A_SNAKE_02", 
+    ai_com = AiFlee()
+    
+    item_com = CompItem(use_function = cast_heal, value = 3)
+    
+    mouse = ObjActor(x, y, "mouse", 
+                    animation_key = "A_MOUSE", 
                     animation_speed = 1, 
                     creature = creature_com, 
-                    ai= ai_com)
+                    ai= ai_com,
+                    item = item_com)
     
-    return snake
+    return mouse
 
 #   ____                      
 #  / ___| __ _ _ __ ___   ___ 
@@ -2187,7 +2276,7 @@ def game_main_loop():
 def game_initialize():
     """This function initializes the main window, in pygame."""
     
-    global SURFACE_MAIN, SURFACE_MAP, CLOCK, FOV_CALCULATE, ASSETS, CAMERA
+    global SURFACE_MAIN, SURFACE_MAP, CLOCK, FOV_CALCULATE, ASSETS, CAMERA, RANDOM_ENGINE
     
     # initialize pygame
     pygame.init()
@@ -2214,18 +2303,15 @@ def game_initialize():
     # The CLOCK tracks and limits cpu cycles
     CLOCK = pygame.time.Clock()
     
+    # Random number engine
+    RANDOM_ENGINE = random.SystemRandom()
+    
     # when FOV_CALCULATE is true, FOV recalculates
     FOV_CALCULATE = True
     
-    # Starts a new game and map
-    try:
-        game_load()
-    except:
-        game_new()
 
 def game_handle_keys():
     '''Handles player input
-
     '''
     
     global FOV_CALCULATE
@@ -2302,11 +2388,9 @@ def game_handle_keys():
             
 def game_message(game_msg, msg_color = constants.COLOR_GREY):
     '''Adds message to the message history
-
     Args:
         game_msg (str): Message to be saved
         msg_color ((int, int, int), optional) = color of the message
-
     '''
     
     GAME.message_history.append((game_msg, msg_color))
@@ -2346,6 +2430,15 @@ def game_load():
     # Create FOV_MAP
     map_make_fov(GAME.current_map)
 
+def game_start():
+    # Starts the game
+    try:
+        game_load()
+    except:
+        game_new()
+    
+    game_main_loop()
+
 #  __  __       _       
 # |  \/  | __ _(_)_ __  
 # | |\/| |/ _` | | '_ \ 
@@ -2353,5 +2446,4 @@ def game_load():
 # |_|  |_|\__,_|_|_| |_|
 
 if __name__ == '__main__':
-    game_initialize()
-    game_main_loop()
+    menu_main()
