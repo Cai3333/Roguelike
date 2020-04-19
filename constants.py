@@ -10,8 +10,8 @@ pygame.init()
 # |____/ \___|_|  \___|\___|_| |_|
 
 # Game sizes
-CAMERA_WIDTH = 800
-CAMERA_HEIGHT = 600
+CAMERA_WIDTH = 1280
+CAMERA_HEIGHT = 720
 CELL_WIDTH = 32
 CELL_HEIGHT =32
 
@@ -20,10 +20,10 @@ GAME_FPS = 63
 
 
 # Map limitations
-MAP_WIDTH = 30
-MAP_HEIGHT = 30
-MAP_MAX_NUM_ROOMS = 3
-
+MAP_WIDTH = 50
+MAP_HEIGHT = 50
+MAP_MAX_NUM_ROOMS = 30
+MAP_NUM_LEVELS = 10
 
 # Room limitations
 ROOM_MAX_HEIGHT = 7
@@ -36,6 +36,8 @@ ROOM_MIN_WIDTH = 3
 COLOR_BLACK = (0, 0, 0)
 COLOR_WHITE = (255, 255, 255)
 COLOR_GREY = (100, 100, 100)
+COLOR_DGREY = (50, 50, 50)
+COLOR_DARKERGREY = (25, 25, 25)
 COLOR_RED = (255, 0, 0)
 COLOR_GREEN = (0, 255, 0)
 
@@ -55,4 +57,4 @@ FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)
 FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 12)
 FONT_CURSOR_TEXT = pygame.font.Font("data/joystix.ttf", CELL_HEIGHT)
 FONT_INVENTORY = pygame.font.Font("data/joystix.ttf", 12)
-FONT_TITLE = pygame.font.Font("data/joystix.ttf", 25)
+FONT_TITLE_SCREEN = pygame.font.Font("data/joystix.ttf", 25)
