@@ -1,0 +1,12 @@
+*************THIS CHARACTER WON**************
+Picking up
+Inid attacks Greg for 0 damage!
+Greg's health is 30/30.
+Inid attacks Greg for 0 damage!
+Greg's health is 30/30.
+Inid attacks Greg for 0 damage!
+Greg's health is 30/30.
+
+*****************END_FILE*******************
+
+
