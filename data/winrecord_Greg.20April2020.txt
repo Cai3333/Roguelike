@@ -1,0 +1,52 @@
+*************THIS CHARACTER WON**************
+Cidna attacks Greg for 2 damage!
+Greg's health is 48/50.
+Cidna attacks Greg for 2 damage!
+Greg's health is 46/50.
+Greg attacks Cidna for 40 damage!
+Cidna's health is 0/7.
+Cidna is death!
+Orlam attacks Greg for 5 damage!
+Greg's health is 41/50.
+Greg attacks Orlam for 40 damage!
+Orlam's health is 0/19.
+Orlam is death!
+Greg attacks Aenod for 40 damage!
+Aenod's health is 0/1.
+Aenod is death! Eat him for more health!
+Picking up
+Picking up
+item equipped
+item equipped
+Picking up
+Greg attacks Eodod for 44 damage!
+Eodod's health is 0/1.
+Eodod is death! Eat him for more health!
+Picking up
+Equipment slot is occupied
+Equipment slot is occupied
+Equipment slot is occupied
+Equipment slot is occupied
+Equipment slot is occupied
+Cibane attacks Greg for 0 damage!
+Greg's health is 41/50.
+Greg attacks Cibane for 44 damage!
+Cibane's health is 0/5.
+Cibane is death!
+Picking up
+Taarid attacks Greg for 0 damage!
+Greg's health is 41/50.
+Taarid attacks Greg for 0 damage!
+Greg's health is 41/50.
+Greg attacks Taarid for 44 damage!
+Taarid's health is 0/7.
+Taarid is death!
+Picking up
+item equipped
+Picking up
+Picking up
+Picking up
+
+*****************END_FILE*******************
+
+
