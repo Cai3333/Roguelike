@@ -11,6 +11,7 @@ import tcod as libtcod
 import constants
 import globalvars
 import text
+import actor
 
 class UiButton:
     def __init__(self, surface, button_text, size, center_coords, 
@@ -137,8 +138,13 @@ def game():
     # draw all objects
     for obj in globalvars.GAME.current_objects:
         obj.draw()  
-    
+
+        if obj.name_object == 'python':
+            obj.creature.draw_health()
+
+        
     globalvars.SURFACE_MAIN.blit(globalvars.SURFACE_MAP, (0, 0), globalvars.CAMERA.rectangle)
+    
     
     debug()
     messages()
@@ -208,10 +214,8 @@ def debug():
     For now, this debug console is limited to the current FPS.
     '''    
     
-    text.display(globalvars.SURFACE_MAIN, "fps:" + str(int(globalvars.CLOCK.get_fps())), constants.FONT_DEBUG_MESSAGE, (0,0), constants.COLOR_WHITE, constants.COLOR_BLACK)
+    text.display(globalvars.SURFACE_MAIN, "fps:" + str(int(globalvars.CLOCK.get_fps())), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - 78,0), constants.COLOR_WHITE, constants.COLOR_BLACK)
     
-
-
 def messages():
     '''Draw the messages console to the display surface.
     This method generates a list of messages to display in the lower left-hand
@@ -261,4 +265,3 @@ def tile_rect(coords, tile_color = None, tile_alpha = None, mark = None):
                     text_color = constants.COLOR_BLACK, center = True)
     
     globalvars.SURFACE_MAP.blit(new_surface, (new_x, new_y))
-    

@@ -265,6 +265,7 @@ class CompCreature:
             self.current_hp = 0
         
         # print message
+        
         game.message(f"{self.name_instance}'s health is {str(self.current_hp)}/{str(self.max_hp)}.", constants.COLOR_RED)
         
         # if health now equals < 1, execute death function
@@ -278,6 +279,36 @@ class CompCreature:
         if self.current_hp > self.max_hp:
             self.current_hp = self.max_hp
 
+    def draw_health(self):
+        
+        self.hp_percentage = self.current_hp / self.max_hp 
+        
+        if self.hp_percentage >= 0.8:
+            col = constants.COLOR_GREEN
+        elif self.hp_percentage >= 0.6:
+            col = (167, 255, 0) 
+        elif self.hp_percentage >= 0.4:
+            col = (255, 255, 0)
+        elif self.hp_percentage >= 0.2:
+            col = (255, 165, 0)
+        elif self.hp_percentage >= 0.0:
+            col = constants.COLOR_RED
+        
+        if self.hp_percentage < 0:
+            self.hp_percentage = 0 
+            
+        BAR_LENGTH = 100
+        BAR_HEIGHT = 20
+        fill = self.hp_percentage * BAR_LENGTH
+        
+        ouline_rect = pygame.Rect(40, 10, BAR_LENGTH, BAR_HEIGHT)
+        fill_rect = pygame.Rect(40, 10, fill, BAR_HEIGHT)
+        
+        pygame.draw.rect(globalvars.SURFACE_MAIN, col, fill_rect)
+        pygame.draw.rect(globalvars.SURFACE_MAIN, constants.COLOR_WHITE, ouline_rect, 2)
+        text.display(globalvars.SURFACE_MAIN, "HP", constants.FONT_DEBUG_MESSAGE, (4,10), constants.COLOR_WHITE)
+        
+    
     @property
     def power(self):
         total_power = self.base_atk

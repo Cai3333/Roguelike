@@ -25,7 +25,7 @@ def player(coords):
     container_com = actor.CompContainers()
 
     creature_com = actor.CompCreature("Greg",
-                                base_atk = 40,
+                                base_atk = 5,
                                 max_hp = 50,
                                 death_function = death.player)
 

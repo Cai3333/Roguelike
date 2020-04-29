@@ -37,6 +37,7 @@ globalvars.SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH, const
 globalvars.SURFACE_MAP = pygame.Surface((constants.MAP_WIDTH * constants.CELL_WIDTH, 
                                 constants.MAP_HEIGHT * constants.CELL_HEIGHT))
 
+
 globalvars.CAMERA = camera.ObjCamera()
 
 # ASSETS stores the games assets

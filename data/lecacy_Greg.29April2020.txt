@@ -1,0 +1,23 @@
+*************THIS CHARACTER LOST**************
+Allbagus attacks Greg for 6 damage!
+Greg's health is 44/50.
+Allbagus attacks Greg for 6 damage!
+Greg's health is 38/50.
+Allbagus attacks Greg for 6 damage!
+Greg's health is 32/50.
+Allbagus attacks Greg for 6 damage!
+Greg's health is 26/50.
+Allbagus attacks Greg for 6 damage!
+Greg's health is 20/50.
+Allbagus attacks Greg for 6 damage!
+Greg's health is 14/50.
+Allbagus attacks Greg for 6 damage!
+Greg's health is 8/50.
+Allbagus attacks Greg for 6 damage!
+Greg's health is 2/50.
+Allbagus attacks Greg for 6 damage!
+Greg's health is 0/50.
+
+*****************END_FILE*******************
+
+

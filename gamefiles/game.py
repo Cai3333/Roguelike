@@ -8,6 +8,7 @@
 import gzip
 import _pickle as pickle
 import sys
+import tcod as libtcod
 
 import pygame
 

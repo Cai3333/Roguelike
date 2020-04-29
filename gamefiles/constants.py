@@ -18,7 +18,6 @@ CELL_HEIGHT =32
 # FPS LIMIT
 GAME_FPS = 63
 
-
 # Map limitations
 MAP_WIDTH = 20
 MAP_HEIGHT = 20
@@ -30,7 +29,6 @@ ROOM_MAX_HEIGHT = 7
 ROOM_MAX_WIDTH = 5
 ROOM_MIN_HEIGHT = 3
 ROOM_MIN_WIDTH = 3
-
 
 # Color definitions
 COLOR_BLACK = (0, 0, 0)
