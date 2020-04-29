@@ -279,7 +279,7 @@ class CompCreature:
         if self.current_hp > self.max_hp:
             self.current_hp = self.max_hp
 
-    def draw_health(self):
+    def draw_health(self, x, y):
         
         self.hp_percentage = self.current_hp / self.max_hp 
         
@@ -301,12 +301,19 @@ class CompCreature:
         BAR_HEIGHT = 20
         fill = self.hp_percentage * BAR_LENGTH
         
-        ouline_rect = pygame.Rect(40, 10, BAR_LENGTH, BAR_HEIGHT)
-        fill_rect = pygame.Rect(40, 10, fill, BAR_HEIGHT)
-        
+        if self.name_instance == 'Greg':
+            ouline_rect = pygame.Rect(40, 10, BAR_LENGTH, BAR_HEIGHT)
+            fill_rect = pygame.Rect(40, 10, fill, BAR_HEIGHT)
+
+            text.display(globalvars.SURFACE_MAIN, "HP", constants.FONT_DEBUG_MESSAGE, (x,y), constants.COLOR_WHITE)
+            
+        else:
+            
+            ouline_rect = pygame.Rect(x, y + 10, BAR_LENGTH, BAR_HEIGHT)
+            fill_rect = pygame.Rect(x, y + 10, fill, BAR_HEIGHT)
+            
         pygame.draw.rect(globalvars.SURFACE_MAIN, col, fill_rect)
         pygame.draw.rect(globalvars.SURFACE_MAIN, constants.COLOR_WHITE, ouline_rect, 2)
-        text.display(globalvars.SURFACE_MAIN, "HP", constants.FONT_DEBUG_MESSAGE, (4,10), constants.COLOR_WHITE)
         
     
     @property

@@ -12,6 +12,7 @@ import constants
 import globalvars
 import text
 import actor
+import maps
 
 class UiButton:
     def __init__(self, surface, button_text, size, center_coords, 
@@ -140,7 +141,7 @@ def game():
         obj.draw()  
 
         if obj.name_object == 'python':
-            obj.creature.draw_health()
+            obj.creature.draw_health(4, 10)
 
         
     globalvars.SURFACE_MAIN.blit(globalvars.SURFACE_MAP, (0, 0), globalvars.CAMERA.rectangle)
@@ -148,6 +149,7 @@ def game():
     
     debug()
     messages()
+    name_under_mouse()
     
 def map_surface(map_to_draw):
     '''Main call for drawing a map to the screen.
@@ -265,3 +267,38 @@ def tile_rect(coords, tile_color = None, tile_alpha = None, mark = None):
                     text_color = constants.COLOR_BLACK, center = True)
     
     globalvars.SURFACE_MAP.blit(new_surface, (new_x, new_y))
+
+def name_under_mouse():
+    
+    # Get mouse coords
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    
+    # Mouse distance from map
+    mapx_pixel, mapy_pixel = globalvars.CAMERA.win_to_map((mouse_x, mouse_y))
+    
+    # Mouse tile over
+    map_coord_x = int(mapx_pixel/constants.CELL_WIDTH)
+    map_coord_y = int(mapy_pixel/constants.CELL_HEIGHT)
+        
+    # For each object in game
+    for obj in globalvars.GAME.current_objects:
+        
+        # If object coords is in mouse coords and is in player fov
+        if obj.x == map_coord_x and obj.y == map_coord_y and libtcod.map_is_in_fov(globalvars.FOV_MAP, obj.x, obj.y):
+            
+            # If object is not player
+            if obj.name_object != None and obj.name_object != 'python':
+                
+                # Display name
+                text.display(globalvars.SURFACE_MAIN,obj.name_object, constants.FONT_DEBUG_MESSAGE, (4, 40), constants.COLOR_WHITE)
+                
+                # Number of letters in obj's name
+                letters = len(obj.name_object)
+                
+                # Width of obj's name
+                length_name_pixels = text.get_width(constants.FONT_DEBUG_MESSAGE) * letters
+                
+                # If monster display hp bar
+                if obj.creature:
+                    obj.creature.draw_health(length_name_pixels + 2 * letters, 30)
+    
