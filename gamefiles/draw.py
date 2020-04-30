@@ -150,6 +150,7 @@ def game():
     debug()
     messages()
     name_under_mouse()
+    dungeon_level()
     
 def map_surface(map_to_draw):
     '''Main call for drawing a map to the screen.
@@ -215,8 +216,9 @@ def debug():
     This method draws a debug console to the upper left corner of the window.
     For now, this debug console is limited to the current FPS.
     '''    
-    
-    text.display(globalvars.SURFACE_MAIN, "fps:" + str(int(globalvars.CLOCK.get_fps())), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - 78,0), constants.COLOR_WHITE, constants.COLOR_BLACK)
+    letters = len("fps:" + str(int(globalvars.CLOCK.get_fps())))
+    length_name_pixels = text.get_width(constants.FONT_DEBUG_MESSAGE) * letters
+    text.display(globalvars.SURFACE_MAIN, "fps:" + str(int(globalvars.CLOCK.get_fps())), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - length_name_pixels - 5,0), constants.COLOR_WHITE)
     
 def messages():
     '''Draw the messages console to the display surface.
@@ -301,4 +303,8 @@ def name_under_mouse():
                 # If monster display hp bar
                 if obj.creature:
                     obj.creature.draw_health(length_name_pixels + 2 * letters, 30)
-    
+
+def dungeon_level():
+    letters = len("Level:" + (globalvars.DUNGEON_LEVEL))
+    length_name_pixels = text.get_width(constants.FONT_DEBUG_MESSAGE) * letters
+    text.display(globalvars.SURFACE_MAIN, "Level:" + (globalvars.DUNGEON_LEVEL), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - length_name_pixels - 5,20), constants.COLOR_WHITE)

@@ -51,3 +51,5 @@ globalvars.RANDOM_ENGINE = random.SystemRandom()
 
 # when FOV_CALCULATE is true, FOV recalculates
 globalvars.FOV_CALCULATE = True
+
+globalvars.DUNGEON_LEVEL = "1" 

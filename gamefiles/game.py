@@ -46,7 +46,9 @@ class ObjGame:
         for obj in self.current_objects:
             obj.animation_destroy()
             
-        self.map_previous.append((globalvars.PLAYER.x, globalvars.PLAYER.y, self.current_map, self.current_rooms, self.current_objects))    
+        self.map_previous.append((globalvars.PLAYER.x, globalvars.PLAYER.y, self.current_map, self.current_rooms, self.current_objects)) 
+        
+        globalvars.DUNGEON_LEVEL = str(int(globalvars.DUNGEON_LEVEL) + 1)
 
         if len(self.map_next) == 0:
             
@@ -72,6 +74,8 @@ class ObjGame:
             del self.map_next[-1]
         
     def transition_previous(self):
+
+        globalvars.DUNGEON_LEVEL = str(int(globalvars.DUNGEON_LEVEL) - 1)
         
         if len(self.map_previous) != 0:
 
