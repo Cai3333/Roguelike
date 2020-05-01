@@ -52,7 +52,11 @@ NUM_MESSAGES = 6
 
 # FONTS #
 FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)
-FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 12)
+FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 14)
 FONT_CURSOR_TEXT = pygame.font.Font("data/joystix.ttf", CELL_HEIGHT)
 FONT_INVENTORY = pygame.font.Font("data/joystix.ttf", 12)
 FONT_TITLE_SCREEN = pygame.font.Font("data/joystix.ttf", 25)
+
+#experience and level-ups
+LEVEL_UP_BASE = 20
+LEVEL_UP_FACTOR = 5

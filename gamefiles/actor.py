@@ -192,7 +192,7 @@ class CompCreature:
         death_function (arg, function): function to be executed when hp reaches 0.
         current_hp (int): current health of the creature.
     '''
-    def __init__(self, name_instance, base_atk = 2, base_def = 0, max_hp = 10, death_function = None):
+    def __init__(self, name_instance, base_atk = 2, base_def = 0, max_hp = 10, xp = None, death_function = None):
         
         self.name_instance = name_instance
         self.base_atk = base_atk
@@ -200,6 +200,7 @@ class CompCreature:
         self.max_hp = max_hp
         self.current_hp = max_hp
         self.death_function = death_function
+        self.xp = xp
         
     
     def move(self, dx, dy):
@@ -241,9 +242,15 @@ class CompCreature:
         if damage_delt < 0:
             damage_delt = 0
             
-        game.message(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage_delt)} damage!", constants.COLOR_WHITE)
-            
-        target.creature.take_damage(damage_delt)
+        if self.owner is globalvars.PLAYER and globalvars.PLAYER.creature.xp <= 0 and target.name_object == 'mouse':
+            game.message(f"Attacked {target.creature.name_instance} without xp!", constants.COLOR_RED)
+            game.message(f"{target.creature.name_instance} gets angry and attacks you!", constants.COLOR_RED)
+            target.creature.take_damage(damage_delt)
+            self.current_hp -= 6
+        
+        else:
+            game.message(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage_delt)} damage!", constants.COLOR_WHITE)
+            target.creature.take_damage(damage_delt)
             
     
     def take_damage(self, damage):
@@ -272,6 +279,17 @@ class CompCreature:
         if self.current_hp <= 0:
             if self.death_function is not None:
                 self.death_function(self.owner)
+                
+            if self.owner != globalvars.PLAYER:
+                globalvars.PLAYER.creature.xp += self.xp
+                if  globalvars.PLAYER.creature.xp < 0:
+                    if  globalvars.PLAYER.level == 0:
+                        globalvars.PLAYER.creature.xp = 0 
+                    else:
+                        globalvars.PLAYER.level -= 1
+                        globalvars.PLAYER.creature.xp = 0 
+                game.check_level_up()
+                
     
     def heal(self, value):
         self.current_hp += value
@@ -314,8 +332,8 @@ class CompCreature:
             
         pygame.draw.rect(globalvars.SURFACE_MAIN, col, fill_rect)
         pygame.draw.rect(globalvars.SURFACE_MAIN, constants.COLOR_WHITE, ouline_rect, 2)
+
         
-    
     @property
     def power(self):
         total_power = self.base_atk
@@ -370,6 +388,7 @@ class CompContainers:
         return list_of_equipped_items
     
     ## TODO Get weight of everything in inventory
+
 
 class CompItem:
     '''Items are components that can be picked up and used.

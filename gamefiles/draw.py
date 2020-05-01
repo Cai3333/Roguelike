@@ -13,6 +13,7 @@ import globalvars
 import text
 import actor
 import maps
+import game
 
 class UiButton:
     def __init__(self, surface, button_text, size, center_coords, 
@@ -151,6 +152,7 @@ def game():
     messages()
     name_under_mouse()
     dungeon_level()
+    player_stats()
     
 def map_surface(map_to_draw):
     '''Main call for drawing a map to the screen.
@@ -305,6 +307,13 @@ def name_under_mouse():
                     obj.creature.draw_health(length_name_pixels + 2 * letters, 30)
 
 def dungeon_level():
-    letters = len("Level:" + (globalvars.DUNGEON_LEVEL))
+    letters = len("Dungeon:" + (globalvars.GAME.current_level))
     length_name_pixels = text.get_width(constants.FONT_DEBUG_MESSAGE) * letters
-    text.display(globalvars.SURFACE_MAIN, "Level:" + (globalvars.DUNGEON_LEVEL), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - length_name_pixels - 5,20), constants.COLOR_WHITE)
+    text.display(globalvars.SURFACE_MAIN, "Dungeon:" + (globalvars.GAME.current_level), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - length_name_pixels - 5,20), constants.COLOR_WHITE)
+    
+def player_stats():
+    
+    text.display(globalvars.SURFACE_MAIN, "Max hp:" + str(globalvars.PLAYER.creature.max_hp), constants.FONT_DEBUG_MESSAGE, (230,10), constants.COLOR_WHITE)
+    text.display(globalvars.SURFACE_MAIN, "Damage:" + str(globalvars.PLAYER.creature.power), constants.FONT_DEBUG_MESSAGE, (430,10), constants.COLOR_WHITE)
+    text.display(globalvars.SURFACE_MAIN, "Defense:" + str(globalvars.PLAYER.creature.defense), constants.FONT_DEBUG_MESSAGE, (630,10), constants.COLOR_WHITE)
+    text.display(globalvars.SURFACE_MAIN, "Level " + str(globalvars.PLAYER.level) + ": " + str(globalvars.PLAYER.creature.xp) + "/" + str(constants.LEVEL_UP_BASE), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - 400,10), constants.COLOR_WHITE)

@@ -27,6 +27,7 @@ def player(coords):
     creature_com = actor.CompCreature("Greg",
                                 base_atk = 5,
                                 max_hp = 50,
+                                xp = 0,
                                 death_function = death.player)
 
     globalvars.PLAYER = actor.ObjActor(x, y, "python",
@@ -34,6 +35,8 @@ def player(coords):
                         animation_speed = 1,
                         creature = creature_com,
                         container = container_com)
+    
+    globalvars.PLAYER.level = 0
 
     globalvars.GAME.current_objects.append(globalvars.PLAYER)
     
@@ -279,7 +282,7 @@ def snake_anaconda(coords):
     creature_name = libtcod.namegen_generate('Celtic female')
     
     creature_com = actor.CompCreature(creature_name, death_function = death.snake, 
-                                base_atk = base_attack, max_hp = max_health)
+                                base_atk = base_attack, max_hp = max_health, xp = (max_health + base_attack)// 2)
     
     ai_com = ai.Chase()
     snake = actor.ObjActor(x, y, "Anaconda", 
@@ -300,7 +303,7 @@ def snake_cobra(coords):
     creature_name = libtcod.namegen_generate('Celtic male')
     
     creature_com = actor.CompCreature(creature_name,death_function = death.snake, 
-                                base_atk = base_attack, max_hp = max_health)
+                                base_atk = base_attack, max_hp = max_health, xp = (max_health + base_attack)// 2)
     
     ai_com = ai.Chase()
     snake = actor.ObjActor(x, y, "Cobra", 
@@ -320,7 +323,7 @@ def mouse(coords):
     creature_name = libtcod.namegen_generate('Celtic male')
     
     creature_com = actor.CompCreature(creature_name,death_function = death.mouse, 
-                                base_atk = base_attack, max_hp = max_health)
+                                base_atk = base_attack, max_hp = max_health, xp = -2)
     
     ai_com = ai.Flee()
     

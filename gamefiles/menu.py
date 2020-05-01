@@ -17,6 +17,7 @@ import game
 import globalvars
 import maps
 import text
+import tcod as libtcod
 
 
 def main():
@@ -111,6 +112,8 @@ def main():
         
         # update surface
         pygame.display.update()
+        
+        globalvars.CLOCK.tick(constants.GAME_FPS)
 
 def options():
     
@@ -458,4 +461,72 @@ def tile_select(coords_origin = None, max_range = None, radius_box = None, radiu
         
         # tick the CLOCK
         globalvars.CLOCK.tick(constants.GAME_FPS)
+
+def level_up():
     
+    # Menu vars
+    settings_menu_width = 200
+    settings_menu_height = 180
+    settings_menu_bgcolor = constants.COLOR_GREY
+    
+    # Slider vars
+    center_x = constants.CAMERA_WIDTH / 2
+    # Button vars
+    center_y = constants.CAMERA_HEIGHT / 2
+    
+    window_center = (center_x, center_y)
+
+    settings_menu_surface = pygame.Surface((settings_menu_width, settings_menu_height))
+    
+    settings_menu_rect = pygame.Rect(0, 0, settings_menu_width, settings_menu_height)
+    
+    settings_menu_rect.center = window_center
+    
+    menu_close = False
+    
+    hp_button = draw.UiButton(globalvars.SURFACE_MAIN, "Max hp: " + str(globalvars.PLAYER.creature.max_hp), (145, 30), (center_x, center_y - 50), 
+                        constants.COLOR_DARKERGREY, constants.COLOR_GREY, constants.COLOR_BLACK, constants.COLOR_BLACK)
+    
+    attack_button = draw.UiButton(globalvars.SURFACE_MAIN, "Attack: " + str(globalvars.PLAYER.creature.base_atk), (145, 30), (center_x, center_y), 
+                        constants.COLOR_DARKERGREY, constants.COLOR_GREY, constants.COLOR_BLACK, constants.COLOR_BLACK)
+    
+    defense_button = draw.UiButton(globalvars.SURFACE_MAIN, "Defense: " + str(globalvars.PLAYER.creature.base_def), (145, 30), (center_x, center_y + 50), 
+                        constants.COLOR_DARKERGREY, constants.COLOR_GREY, constants.COLOR_BLACK, constants.COLOR_BLACK)
+    
+    while not menu_close:
+        
+        list_of_events = pygame.event.get()
+        mouse_position = pygame.mouse.get_pos()
+        
+        game_input = (list_of_events, mouse_position)
+        
+        # Handle menu events
+        for event in list_of_events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            
+        if hp_button.update(game_input):
+            globalvars.PLAYER.creature.max_hp += 5
+            menu_close = True
+            
+        if attack_button.update(game_input):
+            globalvars.PLAYER.creature.base_atk += 5
+            menu_close = True
+            
+        if defense_button.update(game_input):
+            globalvars.PLAYER.creature.base_def += 5
+            menu_close = True
+        
+        # Draw the menu
+        settings_menu_surface.fill(settings_menu_bgcolor)
+        
+        globalvars.SURFACE_MAIN.blit(settings_menu_surface, settings_menu_rect.topleft)
+        
+        hp_button.draw()
+        attack_button.draw()
+        defense_button.draw()
+        
+        globalvars.CLOCK.tick(constants.GAME_FPS)
+        
+        pygame.display.update()

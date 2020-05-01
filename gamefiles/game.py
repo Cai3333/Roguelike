@@ -37,7 +37,8 @@ class ObjGame:
         self.message_history = []
         self.map_previous = []
         self.map_next = []    
-        self.current_map, self.current_rooms = maps.create()   
+        self.current_map, self.current_rooms = maps.create()
+        self.current_level = '1'
         
     def transition_next(self):
         
@@ -48,7 +49,7 @@ class ObjGame:
             
         self.map_previous.append((globalvars.PLAYER.x, globalvars.PLAYER.y, self.current_map, self.current_rooms, self.current_objects)) 
         
-        globalvars.DUNGEON_LEVEL = str(int(globalvars.DUNGEON_LEVEL) + 1)
+        self.current_level = str(int(self.current_level) + 1)
 
         if len(self.map_next) == 0:
             
@@ -75,7 +76,7 @@ class ObjGame:
         
     def transition_previous(self):
 
-        globalvars.DUNGEON_LEVEL = str(int(globalvars.DUNGEON_LEVEL) - 1)
+        self.current_level = str(int(self.current_level) - 1)
         
         if len(self.map_previous) != 0:
 
@@ -202,9 +203,6 @@ def handle_keys():
             # key 'TAB' ->  open inventory menu    
             if event.key == pygame.K_TAB:
                 menu.inventory()
-            
-            
-            
                     
     return "no-action"
 
@@ -218,7 +216,18 @@ def message(game_msg, msg_color = constants.COLOR_GREY):
     
     globalvars.GAME.message_history.append((game_msg, msg_color))
 
-
+def check_level_up():
+    #see if the player's experience is enough to level-up
+    globalvars.LEVEL_UP_XP = constants.LEVEL_UP_BASE + (globalvars.PLAYER.level) * constants.LEVEL_UP_FACTOR
+    if globalvars.PLAYER.creature.xp >= globalvars.LEVEL_UP_XP:
+        globalvars.PLAYER.level += 1
+        globalvars.PLAYER.creature.xp -= globalvars.LEVEL_UP_XP
+        message(f"Your battle skills grow stronger! You reached level {str(globalvars.PLAYER.level)} !", constants.COLOR_GREEN)
+        
+        menu.level_up()
+        
+        
+        
 
 def new():
     # globalvars.GAME tracks game progress
@@ -227,6 +236,7 @@ def new():
     generator.player((0, 0))
 
     maps.place_objects(globalvars.GAME.current_rooms)
+    
 
 def closegame():
 

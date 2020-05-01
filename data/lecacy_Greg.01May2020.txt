@@ -1,0 +1,59 @@
+*************THIS CHARACTER LOST**************
+Attacked Taman without xp!
+Taman gets angry and attacks you!
+Taman's health is 0/1.
+Taman is death! Eat him for more health!
+Agnodma attacks Greg for 2 damage!
+Greg's health is 42/50.
+Agnodma attacks Greg for 2 damage!
+Greg's health is 40/50.
+Greg attacks Agnodma for 5 damage!
+Agnodma's health is 0/5.
+Agnodma is death!
+Picking up
+item equipped
+Picking up
+item equipped
+Greg attacks Danchand for 10 damage!
+Danchand's health is 0/1.
+Danchand is death! Eat him for more health!
+Picking up
+Greg the python healed for 3 health!
+Agnoigan attacks Greg for 0 damage!
+Greg's health is 43/50.
+Greg attacks Agnoigan for 10 damage!
+Agnoigan's health is 0/5.
+Agnoigan is death!
+Brigthach attacks Greg for 4 damage!
+Greg's health is 39/50.
+Brigthach attacks Greg for 4 damage!
+Greg's health is 35/50.
+Brigthach attacks Greg for 4 damage!
+Greg's health is 31/50.
+Greg attacks Brigthach for 10 damage!
+Brigthach's health is 9/19.
+Brigthach attacks Greg for 4 damage!
+Greg's health is 27/50.
+Greg attacks Brigthach for 10 damage!
+Brigthach's health is 0/19.
+Brigthach is death!
+Greg attacks Tadeth for 10 damage!
+Tadeth's health is 0/1.
+Tadeth is death! Eat him for more health!
+Morrlor attacks Greg for 2 damage!
+Greg's health is 25/50.
+item unequipped
+Morrlor attacks Greg for 5 damage!
+Greg's health is 20/50.
+Morrlor attacks Greg for 5 damage!
+Greg's health is 15/50.
+Morrlor attacks Greg for 5 damage!
+Greg's health is 10/50.
+Morrlor attacks Greg for 5 damage!
+Greg's health is 5/50.
+Morrlor attacks Greg for 5 damage!
+Greg's health is 0/50.
+
+*****************END_FILE*******************
+
+
