@@ -45,7 +45,6 @@ class ObjActor:
                 name_object,
                 animation_key,
                 animation_speed = .5,
-                depth = 0,
                 state = None,
 
                 # Components
@@ -192,7 +191,9 @@ class CompCreature:
         death_function (arg, function): function to be executed when hp reaches 0.
         current_hp (int): current health of the creature.
     '''
-    def __init__(self, name_instance, base_atk = 2, base_def = 0, max_hp = 10, xp = None, death_function = None):
+    def __init__(self, name_instance, base_atk = 2, base_def = 0, max_hp = 10, xp = None, 
+                speed = constants.DEFAULT_SPEED, attack_speed = constants.DEFAULT_ATTACK_SPEED, 
+                death_function = None):
         
         self.name_instance = name_instance
         self.base_atk = base_atk
@@ -201,6 +202,10 @@ class CompCreature:
         self.current_hp = max_hp
         self.death_function = death_function
         self.xp = xp
+        self.speed = speed
+        self.wait = 0
+        self.attack_speed = attack_speed
+        
         
     
     def move(self, dx, dy):
@@ -223,6 +228,8 @@ class CompCreature:
         if not tile_is_wall and target is None:
             self.owner.x += dx
             self.owner.y += dy
+            
+        self.wait = self.speed
     
     
     def attack(self, target):
@@ -252,6 +259,8 @@ class CompCreature:
             game.message(f"{self.name_instance} attacks {target.creature.name_instance} for {str(damage_delt)} damage!", constants.COLOR_WHITE)
             target.creature.take_damage(damage_delt)
             
+        self.wait = self.attack_speed
+            
     
     def take_damage(self, damage):
         """Applies damage received to self.health
@@ -272,22 +281,51 @@ class CompCreature:
             self.current_hp = 0
         
         # print message
-        
         game.message(f"{self.name_instance}'s health is {str(self.current_hp)}/{str(self.max_hp)}.", constants.COLOR_RED)
         
         # if health now equals < 1, execute death function
         if self.current_hp <= 0:
             if self.death_function is not None:
                 self.death_function(self.owner)
-                
+            
+            # if death obj is not the player
             if self.owner != globalvars.PLAYER:
+                
+                # Player gets xp
                 globalvars.PLAYER.creature.xp += self.xp
-                if  globalvars.PLAYER.creature.xp < 0:
-                    if  globalvars.PLAYER.level == 0:
-                        globalvars.PLAYER.creature.xp = 0 
-                    else:
-                        globalvars.PLAYER.level -= 1
-                        globalvars.PLAYER.creature.xp = 0 
+                
+                # If the one who died is a mouse
+                if self.owner.name_object == 'mouse':
+                    
+                    # If player is not full hp
+                    if globalvars.PLAYER.creature.current_hp != globalvars.PLAYER.creature.max_hp:
+                        
+                        # Recover some xp because he needed to kill mouse
+                        globalvars.PLAYER.creature.xp += 1
+                        
+                    # If player xp is less than 0
+                    if  globalvars.PLAYER.creature.xp < 0:
+                        
+                        # If player level is 0
+                        if  globalvars.PLAYER.level == 0:
+                            globalvars.PLAYER.creature.xp = 0 
+                        
+                        # If player level is more than 0
+                        else:
+                            globalvars.PLAYER.level -= 1
+                            
+                            # Get random number and lower some stat
+                            num = libtcod.random_get_int(0,0,2)
+                            if num == 0:
+                                globalvars.PLAYER.creature.max_hp -= 5
+                            if num == 1:
+                                globalvars.PLAYER.creature.base_atk -= 5
+                            if num == 2:
+                                globalvars.PLAYER.creature.base_def -= 5
+                            
+                            game.message(f"{self.name_instance} has weakened because it has dropped a level!", constants.COLOR_RED)
+                            
+                            globalvars.PLAYER.creature.xp = 0 
                 game.check_level_up()
                 
     

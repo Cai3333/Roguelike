@@ -98,13 +98,20 @@ def create():
 
 def place_objects(room_list):
     
+    globalvars.MAX_MONSTERS = generator.from_dungeon_level([[5, 1], [8, 4], [10, 6]])
+    globalvars.MAX_ITEMS = generator.from_dungeon_level([[5, 1], [8, 4], [10, 6]])
+    
     current_level = len(globalvars.GAME.map_previous) + 1
     
     top_level = (current_level == 1)
     
     final_level = (current_level == constants.MAP_NUM_LEVELS)
     
-    
+    num_monsters = libtcod.random_get_int(0, globalvars.MAX_MONSTERS // 2 + globalvars.MAX_MONSTERS % 2 > 0, globalvars.MAX_MONSTERS)
+    num_items = libtcod.random_get_int(0, globalvars.MAX_ITEMS // 2 + globalvars.MAX_ITEMS % 2 > 0, globalvars.MAX_ITEMS)
+    current_monsters = 0
+    current_items = 0
+
     for room in room_list:
         first_room = (room == room_list[0])
         last_room = (room == room_list[-1])
@@ -130,20 +137,24 @@ def place_objects(room_list):
         y = libtcod.random_get_int(0, room.y1, room.y2 -1)
         
         if (x, y) != (globalvars.PLAYER.x, globalvars.PLAYER.y):
-            generator.enemy((x, y))
+            if current_monsters < num_monsters:
+                generator.enemy((x, y))
+                current_monsters += 1
             
         x2 = libtcod.random_get_int(0, room.x1, room.x2 -1)
         y2 = libtcod.random_get_int(0, room.y1, room.y2 -1)
         
         if (x2, y2) != (globalvars.PLAYER.x, globalvars.PLAYER.y) and (x2, y2) != (x, y):
-            if last_room:
-                if final_level and (x2, y2) != (lampx, lampy):
-                    generator.item((x2, y2))
-                else:
-                    if (x2, y2) != (stairsx, stairsy):
+            if current_items < num_items:
+                if last_room:
+                    if final_level and (x2, y2) != (lampx, lampy):
                         generator.item((x2, y2))
-            else:
-                generator.item((x2, y2))
+                    else:
+                        if (x2, y2) != (stairsx, stairsy):
+                            generator.item((x2, y2))
+                else:
+                    generator.item((x2, y2))
+                current_items += 1
 
 def create_room(new_map, new_room):
     
@@ -197,8 +208,6 @@ def check_for_creature(xPos, yPos, exclude_object = None):
             obj.creature):
                 return obj
     return None
-
-
     
 def make_fov(incoming_map):
     '''Creates an FOV map based on a map.

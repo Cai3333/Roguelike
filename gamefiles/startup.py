@@ -10,6 +10,7 @@ import data
 import camera
 import assets
 import game
+import generator
 
 
 '''This function initializes the main window, and pygame.

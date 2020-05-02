@@ -99,22 +99,23 @@ class ObjGame:
 def main_loop():
     """"In this function, we loop the main game."""
     game_quit = False
-    
-    # Player action definition
-    player_action = "no-action"
-    
+        
     while not game_quit:
-        # Handle player input
-        player_action = handle_keys()
+        
+        if globalvars.PLAYER.creature.wait > 0:
+            globalvars.PLAYER.creature.wait -= 1
+            
+        else:        
+            # Handle player input
+            player_action = handle_keys()
         
         maps.calculate_fov()
         
-        if player_action == "Quit":
-            closegame()
-        
         for obj in globalvars.GAME.current_objects:
             if obj.ai:
-                if player_action != "no-action":
+                if obj.creature.wait > 0:  #don't take a turn yet if still waiting
+                    obj.creature.wait -= 1
+                else:
                     obj.ai.take_turn()
 
             if obj.exitportal:
@@ -135,7 +136,6 @@ def main_loop():
 def handle_keys():
     '''Handles player input
     '''
-
     # get player input
     key_list = pygame.key.get_pressed()
     events_list = pygame.event.get()
@@ -146,7 +146,7 @@ def handle_keys():
     for event in events_list:  # loop through all events that have happened
         
         if event.type == pygame.QUIT:  #If close window, close
-            return "Quit"
+            closegame()
             
         if event.type == pygame.KEYDOWN:
             
@@ -154,25 +154,21 @@ def handle_keys():
             if event.key == pygame.K_UP or event.key == pygame.K_w:
                 globalvars.PLAYER.creature.move(0, -1)
                 globalvars.FOV_CALCULATE = True
-                return "player-moved"
             
             # Move down
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 globalvars.PLAYER.creature.move(0, 1)
                 globalvars.FOV_CALCULATE = True
-                return "player-moved"
             
             # Move left
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 globalvars.PLAYER.creature.move(-1, 0)
                 globalvars.FOV_CALCULATE = True
-                return "player-moved"
             
             # Move right
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 globalvars.PLAYER.creature.move(1, 0)
                 globalvars.FOV_CALCULATE = True
-                return "player-moved"
             
             # key 'e' -> pick up objects
             if event.key == pygame.K_e:
@@ -204,7 +200,6 @@ def handle_keys():
             if event.key == pygame.K_TAB:
                 menu.inventory()
                     
-    return "no-action"
 
 
 def message(game_msg, msg_color = constants.COLOR_GREY):
@@ -225,8 +220,6 @@ def check_level_up():
         message(f"Your battle skills grow stronger! You reached level {str(globalvars.PLAYER.level)} !", constants.COLOR_GREEN)
         
         menu.level_up()
-        
-        
         
 
 def new():

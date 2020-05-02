@@ -328,6 +328,14 @@ def inventory():
                         
                         if obj == "Lightning scroll" or obj == "Fireball-box scroll" or obj == "Fireball-diamond scroll" or obj == "Confusion scroll":
                             menu_close = True
+                            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if (event.button) == 3:
+                    if (mouse_in_window and 
+                    mouse_line_selection <= len(print_list) - 1):                        
+                        obj = globalvars.PLAYER.container.inventory[mouse_line_selection].name_object
+                        
+                        globalvars.PLAYER.container.inventory[mouse_line_selection].item.drop(globalvars.PLAYER.x, globalvars.PLAYER.y)
                     
         # Draw the list
         for line, (name) in enumerate(print_list):

@@ -1,0 +1,44 @@
+*************THIS CHARACTER LOST**************
+Attacked Briggus without xp!
+Briggus gets angry and attacks you!
+Briggus's health is 0/1.
+Briggus is death! Eat him for more health!
+Attacked Aenaid without xp!
+Aenaid gets angry and attacks you!
+Aenaid's health is 0/1.
+Aenaid is death! Eat him for more health!
+Iodiu attacks Greg for 4 damage!
+Greg's health is 34/50.
+Greg attacks Iodiu for 5 damage!
+Iodiu's health is 0/5.
+Iodiu is death!
+Nume attacks Greg for 4 damage!
+Greg's health is 30/50.
+Greg attacks Nume for 5 damage!
+Nume's health is 0/5.
+Nume is death!
+Picking up
+Brigme attacks Greg for 2 damage!
+Greg's health is 28/50.
+Greg attacks Brigme for 5 damage!
+Brigme's health is 0/5.
+Brigme is death!
+Picking up
+Allchlam's health is 12/20.
+The monster Howls out in pain.
+Allchlam attacks Greg for 6 damage!
+Greg's health is 22/50.
+Allchlam attacks Greg for 6 damage!
+Greg's health is 16/50.
+Allchlam attacks Greg for 6 damage!
+Greg's health is 10/50.
+Greg attacks Allchlam for 5 damage!
+Allchlam's health is 7/20.
+Allchlam attacks Greg for 6 damage!
+Greg's health is 4/50.
+Allchlam attacks Greg for 6 damage!
+Greg's health is 0/50.
+
+*****************END_FILE*******************
+
+
