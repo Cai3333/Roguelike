@@ -25,8 +25,10 @@ def player(coords):
     container_com = actor.CompContainers()
 
     creature_com = actor.CompCreature("Greg",
-                                base_atk = 40,
+                                base_atk = 5,
                                 max_hp = 50,
+                                xp = 0,
+                                speed = constants.PLAYER_SPEED,
                                 death_function = death.player)
 
     globalvars.PLAYER = actor.ObjActor(x, y, "python",
@@ -34,6 +36,8 @@ def player(coords):
                         animation_speed = 1,
                         creature = creature_com,
                         container = container_com)
+    
+    globalvars.PLAYER.level = 0
 
     globalvars.GAME.current_objects.append(globalvars.PLAYER)
     
@@ -75,46 +79,70 @@ def LAMP(coords):
 
 # Items
 def item(coords):
+
+    item_chances = {}
     
-    random_num = libtcod.random_get_int(0, 1, 100)
+    item_chances['ligthing'] = from_dungeon_level([[3, 2], [8, 4], [6, 6], [4, 8]])
     
-    if random_num in range(1, 11): 
+    item_chances['fireball_box'] = from_dungeon_level([[3, 1], [5, 3], [6, 6], [2, 8]])
+    
+    item_chances['confusion'] = 5
+    
+    item_chances['fireball_diamond'] = from_dungeon_level([[6, 4], [10, 6], [15, 8]])
+    
+    item_chances['sword'] = from_dungeon_level([[10, 1], [7, 3], [5, 6], [3, 8]])
+    
+    item_chances['shield'] = from_dungeon_level([[10, 1], [7, 3], [5, 6], [3, 8]])
+    
+    item_chances['dagger'] = from_dungeon_level([[15, 2], [5, 4], [1, 6]])
+    
+    item_chances['scythe'] = from_dungeon_level([[10, 5], [15, 8]])
+    
+    item_chances['shield_diamond'] = from_dungeon_level([[10, 5], [15, 8]])
+    
+    item_chances['body_diamond'] = from_dungeon_level([[10, 5], [15, 8]])
+    
+    item_chances['body'] = from_dungeon_level([[10, 1], [7, 3], [5, 6], [3, 8]])
+    
+    choice = random_choice(item_chances)
+    
+    new_item = None
+    
+    if choice == 'lighting': 
         new_item = scroll_lightning(coords)
         
-    elif random_num in range(11, 21): 
+    elif choice == 'fireball_box': 
         new_item = scroll_fireball_box(coords)
         
-    elif random_num in range(21, 31): 
+    elif choice == 'confusion': 
         new_item = scroll_confusion(coords)
         
-    elif random_num in range(31, 36): 
+    elif choice == 'fireball_diamond': 
         new_item = scroll_fireball_diamond(coords)
     
-    elif random_num in range(36, 46):
+    elif choice == 'sword':
         new_item = weapon_sword(coords)
         
-    elif random_num in range(46, 56):
+    elif choice == 'shield':
         new_item = armor_shield(coords)
         
-    elif random_num in range(56, 66):
+    elif choice == 'dagger':
         new_item = weapon_dagger(coords)
 
-    elif random_num in range(66, 71):
+    elif choice == 'scythe':
         new_item = weapon_scythe(coords)
-    
-    elif random_num in range(71, 81):   
-        new_item = armor_shield(coords)
         
-    elif random_num in range(81, 86):   
+    elif choice == 'shield_diamond':   
         new_item = armor_shield_diamond(coords)
         
-    elif random_num in range(86, 91):   
+    elif choice == 'body_diamond':   
         new_item = armor_body_diamond(coords)
 
-    elif random_num in range(91, 101):   
+    elif choice == 'body':   
         new_item = armor_body(coords)
-        
-    globalvars.GAME.current_objects.insert(0, new_item)
+    
+    if new_item:
+        globalvars.GAME.current_objects.insert(0, new_item)
 
 def scroll_lightning(coords):
 
@@ -252,19 +280,26 @@ def armor_body_diamond(coords):
 
 # Enemies
 def enemy(coords):
-    random_num = libtcod.random_get_int(0, 1, 100)
     
-    if random_num in range(1, 16): 
+    monster_chances = {}
+    
+    monster_chances['cobra'] = from_dungeon_level([[5, 2], [10, 4], [30, 6], [50, 8]])
+    
+    monster_chances['mouse'] = from_dungeon_level([[65, 1], [55, 3], [40, 6], [20, 8]])
+    
+    monster_chances['anaconda'] = 30
+    
+    choice = random_choice(monster_chances)
+    
+    if choice == 'cobra': 
         new_enemy = snake_cobra(coords)
         
-    elif random_num in range(16, 51): 
+    elif choice == 'anaconda': 
         new_enemy = snake_anaconda(coords)
         
-    elif random_num in range(51, 101): 
+    elif choice == 'mouse': 
         new_enemy = mouse(coords)
         
-    elif random_num in range(150, 200): 
-        new_enemy = snake_cobra(coords)
         
     globalvars.GAME.current_objects.insert(-1, new_enemy)
     
@@ -279,7 +314,7 @@ def snake_anaconda(coords):
     creature_name = libtcod.namegen_generate('Celtic female')
     
     creature_com = actor.CompCreature(creature_name, death_function = death.snake, 
-                                base_atk = base_attack, max_hp = max_health)
+                                base_atk = base_attack, max_hp = max_health, xp = (max_health + base_attack)// 2)
     
     ai_com = ai.Chase()
     snake = actor.ObjActor(x, y, "Anaconda", 
@@ -300,7 +335,7 @@ def snake_cobra(coords):
     creature_name = libtcod.namegen_generate('Celtic male')
     
     creature_com = actor.CompCreature(creature_name,death_function = death.snake, 
-                                base_atk = base_attack, max_hp = max_health)
+                                base_atk = base_attack, max_hp = max_health, xp = (max_health + base_attack)// 2)
     
     ai_com = ai.Chase()
     snake = actor.ObjActor(x, y, "Cobra", 
@@ -319,8 +354,8 @@ def mouse(coords):
     
     creature_name = libtcod.namegen_generate('Celtic male')
     
-    creature_com = actor.CompCreature(creature_name,death_function = death.mouse, 
-                                base_atk = base_attack, max_hp = max_health)
+    creature_com = actor.CompCreature(creature_name, death_function = death.mouse, 
+                                base_atk = base_attack, max_hp = max_health, xp = -2, speed = 20)
     
     ai_com = ai.Flee()
     
@@ -334,3 +369,31 @@ def mouse(coords):
                     item = item_com)
     
     return mouse
+
+def random_choice_index(chances):  #choose one option from list of chances, returning its index
+    #the dice will land on some number between 1 and the sum of the chances
+    dice = libtcod.random_get_int(0, 1, sum(chances))
+
+    #go through all chances, keeping the sum so far
+    running_sum = 0
+    choice = 0
+    for w in chances:
+        running_sum += w
+
+        #see if the dice landed in the part that corresponds to this choice
+        if dice <= running_sum:
+            return choice
+        choice += 1
+        
+def random_choice(chances_dict):
+    #choose one option from dictionary of chances, returning its key
+    chances = list(chances_dict.values())
+    strings = list(chances_dict.keys())
+    return strings[random_choice_index(chances)]
+
+def from_dungeon_level(table):
+    #returns a value that depends on level. the table specifies what value occurs after each level, default is 0.
+    for (value, level) in reversed(table):
+        if int(globalvars.GAME.current_level) >= level:
+            return value
+    return 0

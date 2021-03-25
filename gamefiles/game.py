@@ -8,6 +8,7 @@
 import gzip
 import _pickle as pickle
 import sys
+import tcod as libtcod
 
 import pygame
 
@@ -36,7 +37,8 @@ class ObjGame:
         self.message_history = []
         self.map_previous = []
         self.map_next = []    
-        self.current_map, self.current_rooms = maps.create()   
+        self.current_map, self.current_rooms = maps.create()
+        self.current_level = '1'
         
     def transition_next(self):
         
@@ -45,7 +47,9 @@ class ObjGame:
         for obj in self.current_objects:
             obj.animation_destroy()
             
-        self.map_previous.append((globalvars.PLAYER.x, globalvars.PLAYER.y, self.current_map, self.current_rooms, self.current_objects))    
+        self.map_previous.append((globalvars.PLAYER.x, globalvars.PLAYER.y, self.current_map, self.current_rooms, self.current_objects)) 
+        
+        self.current_level = str(int(self.current_level) + 1)
 
         if len(self.map_next) == 0:
             
@@ -71,6 +75,8 @@ class ObjGame:
             del self.map_next[-1]
         
     def transition_previous(self):
+
+        self.current_level = str(int(self.current_level) - 1)
         
         if len(self.map_previous) != 0:
 
@@ -93,22 +99,23 @@ class ObjGame:
 def main_loop():
     """"In this function, we loop the main game."""
     game_quit = False
-    
-    # Player action definition
-    player_action = "no-action"
-    
+        
     while not game_quit:
-        # Handle player input
-        player_action = handle_keys()
+        
+        if globalvars.PLAYER.creature.wait > 0:
+            globalvars.PLAYER.creature.wait -= 1
+            
+        else:        
+            # Handle player input
+            player_action = handle_keys()
         
         maps.calculate_fov()
         
-        if player_action == "Quit":
-            closegame()
-        
         for obj in globalvars.GAME.current_objects:
             if obj.ai:
-                if player_action != "no-action":
+                if obj.creature.wait > 0:  #don't take a turn yet if still waiting
+                    obj.creature.wait -= 1
+                else:
                     obj.ai.take_turn()
 
             if obj.exitportal:
@@ -129,7 +136,6 @@ def main_loop():
 def handle_keys():
     '''Handles player input
     '''
-
     # get player input
     key_list = pygame.key.get_pressed()
     events_list = pygame.event.get()
@@ -140,7 +146,7 @@ def handle_keys():
     for event in events_list:  # loop through all events that have happened
         
         if event.type == pygame.QUIT:  #If close window, close
-            return "Quit"
+            closegame()
             
         if event.type == pygame.KEYDOWN:
             
@@ -148,25 +154,21 @@ def handle_keys():
             if event.key == pygame.K_UP or event.key == pygame.K_w:
                 globalvars.PLAYER.creature.move(0, -1)
                 globalvars.FOV_CALCULATE = True
-                return "player-moved"
             
             # Move down
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 globalvars.PLAYER.creature.move(0, 1)
                 globalvars.FOV_CALCULATE = True
-                return "player-moved"
             
             # Move left
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 globalvars.PLAYER.creature.move(-1, 0)
                 globalvars.FOV_CALCULATE = True
-                return "player-moved"
             
             # Move right
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 globalvars.PLAYER.creature.move(1, 0)
                 globalvars.FOV_CALCULATE = True
-                return "player-moved"
             
             # key 'e' -> pick up objects
             if event.key == pygame.K_e:
@@ -197,11 +199,7 @@ def handle_keys():
             # key 'TAB' ->  open inventory menu    
             if event.key == pygame.K_TAB:
                 menu.inventory()
-            
-            
-            
                     
-    return "no-action"
 
 
 def message(game_msg, msg_color = constants.COLOR_GREY):
@@ -213,7 +211,16 @@ def message(game_msg, msg_color = constants.COLOR_GREY):
     
     globalvars.GAME.message_history.append((game_msg, msg_color))
 
-
+def check_level_up():
+    #see if the player's experience is enough to level-up
+    globalvars.LEVEL_UP_XP = constants.LEVEL_UP_BASE + (globalvars.PLAYER.level) * constants.LEVEL_UP_FACTOR
+    if globalvars.PLAYER.creature.xp >= globalvars.LEVEL_UP_XP:
+        globalvars.PLAYER.level += 1
+        globalvars.PLAYER.creature.xp -= globalvars.LEVEL_UP_XP
+        message(f"Your battle skills grow stronger! You reached level {str(globalvars.PLAYER.level)} !", constants.COLOR_GREEN)
+        
+        menu.level_up()
+        
 
 def new():
     # globalvars.GAME tracks game progress
@@ -222,6 +229,7 @@ def new():
     generator.player((0, 0))
 
     maps.place_objects(globalvars.GAME.current_rooms)
+    
 
 def closegame():
 

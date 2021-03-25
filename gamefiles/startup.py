@@ -10,6 +10,7 @@ import data
 import camera
 import assets
 import game
+import generator
 
 
 '''This function initializes the main window, and pygame.
@@ -37,6 +38,7 @@ globalvars.SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH, const
 globalvars.SURFACE_MAP = pygame.Surface((constants.MAP_WIDTH * constants.CELL_WIDTH, 
                                 constants.MAP_HEIGHT * constants.CELL_HEIGHT))
 
+
 globalvars.CAMERA = camera.ObjCamera()
 
 # ASSETS stores the games assets
@@ -50,3 +52,5 @@ globalvars.RANDOM_ENGINE = random.SystemRandom()
 
 # when FOV_CALCULATE is true, FOV recalculates
 globalvars.FOV_CALCULATE = True
+
+globalvars.DUNGEON_LEVEL = "1" 

@@ -57,7 +57,7 @@ def cast_fireball_box(caster, T_damage_radius_range):
     
     if point_selected:
         # get sequence of tiles
-        tiles_to_damage = maps.find_radius(point_selected, local_radius)
+        tiles_to_damage = maps.find_radius_box(point_selected, local_radius)
         
         creature_hit = False
         
@@ -88,7 +88,7 @@ def cast_fireball_diamond(caster, T_damage_radius_range):
     
     if point_selected:
         # get sequence of tiles
-        tiles_to_damage = maps.find_radius(point_selected, local_radius)
+        tiles_to_damage = maps.find_radius_diamond(point_selected, local_radius)
         
         creature_hit = False
         

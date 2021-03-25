@@ -16,21 +16,19 @@ CELL_WIDTH = 32
 CELL_HEIGHT =32
 
 # FPS LIMIT
-GAME_FPS = 63
-
+GAME_FPS = 60
 
 # Map limitations
 MAP_WIDTH = 20
 MAP_HEIGHT = 20
 MAP_MAX_NUM_ROOMS = 10
-MAP_NUM_LEVELS = 2
+MAP_NUM_LEVELS = 10
 
 # Room limitations
-ROOM_MAX_HEIGHT = 7
-ROOM_MAX_WIDTH = 5
-ROOM_MIN_HEIGHT = 3
-ROOM_MIN_WIDTH = 3
-
+ROOM_MAX_HEIGHT = 8
+ROOM_MAX_WIDTH = 7
+ROOM_MIN_HEIGHT = 4
+ROOM_MIN_WIDTH = 4
 
 # Color definitions
 COLOR_BLACK = (0, 0, 0)
@@ -54,7 +52,16 @@ NUM_MESSAGES = 6
 
 # FONTS #
 FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)
-FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 12)
+FONT_MESSAGE_TEXT = pygame.font.Font("data/terminus.ttf", 14)
 FONT_CURSOR_TEXT = pygame.font.Font("data/joystix.ttf", CELL_HEIGHT)
 FONT_INVENTORY = pygame.font.Font("data/joystix.ttf", 12)
 FONT_TITLE_SCREEN = pygame.font.Font("data/joystix.ttf", 25)
+
+#experience and level-ups
+LEVEL_UP_BASE = 20
+LEVEL_UP_FACTOR = 5
+
+# SPEED
+PLAYER_SPEED = 5
+DEFAULT_SPEED = 20
+DEFAULT_ATTACK_SPEED = 20

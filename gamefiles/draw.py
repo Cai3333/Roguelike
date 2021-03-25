@@ -11,6 +11,9 @@ import tcod as libtcod
 import constants
 import globalvars
 import text
+import actor
+import maps
+import game
 
 class UiButton:
     def __init__(self, surface, button_text, size, center_coords, 
@@ -137,11 +140,19 @@ def game():
     # draw all objects
     for obj in globalvars.GAME.current_objects:
         obj.draw()  
-    
+
+        if obj.name_object == 'python':
+            obj.creature.draw_health(4, 10)
+
+        
     globalvars.SURFACE_MAIN.blit(globalvars.SURFACE_MAP, (0, 0), globalvars.CAMERA.rectangle)
+    
     
     debug()
     messages()
+    name_under_mouse()
+    dungeon_level()
+    player_stats()
     
 def map_surface(map_to_draw):
     '''Main call for drawing a map to the screen.
@@ -207,11 +218,10 @@ def debug():
     This method draws a debug console to the upper left corner of the window.
     For now, this debug console is limited to the current FPS.
     '''    
+    letters = len("fps:" + str(int(globalvars.CLOCK.get_fps())))
+    length_name_pixels = text.get_width(constants.FONT_DEBUG_MESSAGE) * letters
+    text.display(globalvars.SURFACE_MAIN, "fps:" + str(int(globalvars.CLOCK.get_fps())), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - length_name_pixels - 5,0), constants.COLOR_WHITE)
     
-    text.display(globalvars.SURFACE_MAIN, "fps:" + str(int(globalvars.CLOCK.get_fps())), constants.FONT_DEBUG_MESSAGE, (0,0), constants.COLOR_WHITE, constants.COLOR_BLACK)
-    
-
-
 def messages():
     '''Draw the messages console to the display surface.
     This method generates a list of messages to display in the lower left-hand
@@ -261,4 +271,49 @@ def tile_rect(coords, tile_color = None, tile_alpha = None, mark = None):
                     text_color = constants.COLOR_BLACK, center = True)
     
     globalvars.SURFACE_MAP.blit(new_surface, (new_x, new_y))
+
+def name_under_mouse():
     
+    # Get mouse coords
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    
+    # Mouse distance from map
+    mapx_pixel, mapy_pixel = globalvars.CAMERA.win_to_map((mouse_x, mouse_y))
+    
+    # Mouse tile over
+    map_coord_x = int(mapx_pixel/constants.CELL_WIDTH)
+    map_coord_y = int(mapy_pixel/constants.CELL_HEIGHT)
+        
+    # For each object in game
+    for obj in globalvars.GAME.current_objects:
+        
+        # If object coords is in mouse coords and is in player fov
+        if obj.x == map_coord_x and obj.y == map_coord_y and libtcod.map_is_in_fov(globalvars.FOV_MAP, obj.x, obj.y):
+            
+            # If object is not player
+            if obj.name_object != None and obj.name_object != 'python':
+                
+                # Display name
+                text.display(globalvars.SURFACE_MAIN,obj.name_object, constants.FONT_DEBUG_MESSAGE, (4, 40), constants.COLOR_WHITE)
+                
+                # Number of letters in obj's name
+                letters = len(obj.name_object)
+                
+                # Width of obj's name
+                length_name_pixels = text.get_width(constants.FONT_DEBUG_MESSAGE) * letters
+                
+                # If monster display hp bar
+                if obj.creature:
+                    obj.creature.draw_health(length_name_pixels + 2 * letters, 30)
+
+def dungeon_level():
+    letters = len("Dungeon:" + (globalvars.GAME.current_level))
+    length_name_pixels = text.get_width(constants.FONT_DEBUG_MESSAGE) * letters
+    text.display(globalvars.SURFACE_MAIN, "Dungeon:" + (globalvars.GAME.current_level), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - length_name_pixels - 5,20), constants.COLOR_WHITE)
+    
+def player_stats():
+    
+    text.display(globalvars.SURFACE_MAIN, "Max hp:" + str(globalvars.PLAYER.creature.max_hp), constants.FONT_DEBUG_MESSAGE, (230,10), constants.COLOR_WHITE)
+    text.display(globalvars.SURFACE_MAIN, "Damage:" + str(globalvars.PLAYER.creature.power), constants.FONT_DEBUG_MESSAGE, (430,10), constants.COLOR_WHITE)
+    text.display(globalvars.SURFACE_MAIN, "Defense:" + str(globalvars.PLAYER.creature.defense), constants.FONT_DEBUG_MESSAGE, (630,10), constants.COLOR_WHITE)
+    text.display(globalvars.SURFACE_MAIN, "Level " + str(globalvars.PLAYER.level) + ": " + str(globalvars.PLAYER.creature.xp) + "/" + str(constants.LEVEL_UP_BASE), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - 400,10), constants.COLOR_WHITE)

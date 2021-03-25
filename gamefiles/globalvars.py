@@ -2,7 +2,8 @@
 def init():
     global SURFACE_MAIN, SURFACE_MAP
     global CLOCK, FOV_CALCULATE, FOV_MAP, ASSETS, CAMERA, RANDOM_ENGINE
-    global PREFERENCES, GAME, PLAYER
+    global PREFERENCES, GAME, PLAYER, DUNGEON_LEVEL, LEVEL_UP_XP
+    global MAX_ITEMS, MAX_MONSTERS
 
     SURFACE_MAIN = None
     SURFACE_MAP = None
@@ -15,3 +16,6 @@ def init():
     PREFERENCES = None
     GAME = None
     PLAYER = None
+    LEVEL_UP_XP = None
+    MAX_ITEMS = None
+    MAX_MONSTERS = None
