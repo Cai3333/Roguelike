@@ -6,7 +6,7 @@
 
 # add subdirectory to the path to import gamefiles
 import sys
-sys.path.insert(0, 'c:\Python\Projects\Roguelike\gamefiles')
+sys.path.insert(0, './gamefiles')
 
 # gamefiles
 import startup
