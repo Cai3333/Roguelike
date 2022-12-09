@@ -177,12 +177,6 @@ def handle_keys():
                 for obj in objects_at_player:
                     if obj.item:
                         obj.item.pick_up(globalvars.PLAYER)
-            
-            # key 'f' -> interact with stairs
-            if  event.key == pygame.K_f:
-                list_of_objs = maps.objects_at_coords(globalvars.PLAYER.x, globalvars.PLAYER.y)
-                
-                for obj in list_of_objs:
                     if obj.stairs:
                         obj.stairs.use()
                     if obj.exitportal:
