@@ -592,15 +592,15 @@ class CompExitPortal:
             
             globalvars.PLAYER.state = "STATUS_WIN"
             
-            globalvars.SURFACE_MAIN.fill(constants.COLOR_WHITE)
+            globalvars.SURFACE_MAIN.fill(constants.COLOR_BLACK)
             
             screen_center = (constants.CAMERA_WIDTH / 2, constants.CAMERA_HEIGHT / 2)
 
-            text.display(globalvars.SURFACE_MAIN, "YOU WON!", constants.FONT_TITLE_SCREEN, screen_center, constants.COLOR_BLACK, center = True)
+            text.display(globalvars.SURFACE_MAIN, "YOU WON!", constants.FONT_TITLE_SCREEN, screen_center, constants.COLOR_WHITE, center = True)
             
             pygame.display.update()
             
-            filename = "data/winrecord_" + globalvars.PLAYER.creature.name_instance + '.' + datetime.date.today().strftime('%d%B%Y') + (".txt")
+            filename = "data/winrecord/" + globalvars.PLAYER.creature.name_instance + '.' + datetime.date.today().strftime('%d%B%Y') + (".txt")
             
             file_exists = os.path.isfile(filename)
             save_exists = os.path.isfile('data/savegame')

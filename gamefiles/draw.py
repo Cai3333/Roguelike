@@ -141,9 +141,6 @@ def game():
     for obj in globalvars.GAME.current_objects:
         obj.draw()  
 
-        if obj.name_object == 'python':
-            obj.creature.draw_health(4, 10)
-
         
     globalvars.SURFACE_MAIN.blit(globalvars.SURFACE_MAP, (0, 0), globalvars.CAMERA.rectangle)
     
@@ -312,7 +309,7 @@ def dungeon_level():
     text.display(globalvars.SURFACE_MAIN, "Dungeon:" + (globalvars.GAME.current_level), constants.FONT_DEBUG_MESSAGE, (constants.CAMERA_WIDTH - length_name_pixels - 5,20), constants.COLOR_WHITE)
     
 def player_stats():
-    
+    globalvars.PLAYER.creature.draw_health(4, 10)
     text.display(globalvars.SURFACE_MAIN, "Max hp:" + str(globalvars.PLAYER.creature.max_hp), constants.FONT_DEBUG_MESSAGE, (230,10), constants.COLOR_WHITE)
     text.display(globalvars.SURFACE_MAIN, "Damage:" + str(globalvars.PLAYER.creature.power), constants.FONT_DEBUG_MESSAGE, (430,10), constants.COLOR_WHITE)
     text.display(globalvars.SURFACE_MAIN, "Defense:" + str(globalvars.PLAYER.creature.defense), constants.FONT_DEBUG_MESSAGE, (630,10), constants.COLOR_WHITE)
