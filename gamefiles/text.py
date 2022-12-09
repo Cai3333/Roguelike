@@ -75,10 +75,11 @@ def get_height(font):
     '''
     
     # render the font out
-    font_object = font.render('a', True, (0, 0, 0))
-    font_rect = font_object.get_rect()
+    # font_object = font.render("b", True, (0, 0, 0))
+    # font_rect = font_object.get_rect()
+    # print(font_rect.height)
     
-    return font_rect.height
+    return font.get_height()
 
 def get_width(font):
     '''Measures the width in pixels of a specified font.

@@ -600,7 +600,7 @@ class CompExitPortal:
             
             pygame.display.update()
             
-            filename = "data\winrecord_" + globalvars.PLAYER.creature.name_instance + '.' + datetime.date.today().strftime('%d%B%Y') + (".txt")
+            filename = "data/winrecord_" + globalvars.PLAYER.creature.name_instance + '.' + datetime.date.today().strftime('%d%B%Y') + (".txt")
             
             file_exists = os.path.isfile(filename)
             save_exists = os.path.isfile('data/savegame')

@@ -178,6 +178,7 @@ def handle_keys():
                     if obj.item:
                         obj.item.pick_up(globalvars.PLAYER)
             
+            # key 'f' -> interact with stairs
             if  event.key == pygame.K_f:
                 list_of_objs = maps.objects_at_coords(globalvars.PLAYER.x, globalvars.PLAYER.y)
                 
@@ -192,7 +193,7 @@ def handle_keys():
                 if len(globalvars.PLAYER.container.inventory) > 0:
                     globalvars.PLAYER.container.inventory[-1].item.drop(globalvars.PLAYER.x, globalvars.PLAYER.y)
             
-            # key 'p' -> pause the game        
+            # key 'ESC' -> pause the game        
             if event.key == pygame.K_ESCAPE:
                 menu.pause()
             
@@ -244,13 +245,13 @@ def save():
     for obj in globalvars.GAME.current_objects:
         obj.animation_destroy()
 
-    with gzip.open('data\savegame', 'wb') as file:
+    with gzip.open('data/savegame', 'wb') as file:
         pickle.dump([globalvars.GAME, globalvars.PLAYER], file)
         
         
 def load():
 
-    with gzip.open('data\savegame', 'rb') as file:
+    with gzip.open('data/savegame', 'rb') as file:
         globalvars.GAME, globalvars.PLAYER = pickle.load(file)
 
     for obj in globalvars.GAME.current_objects:
@@ -260,10 +261,10 @@ def load():
     maps.make_fov(globalvars.GAME.current_map)
 
 def preferences_save():
-    with gzip.open('data\pref', 'wb') as file:
+    with gzip.open('data/pref', 'wb') as file:
         pickle.dump(globalvars.PREFERENCES, file)
 
 def preferences_load():
 
-    with gzip.open('data\pref', 'rb') as file:
+    with gzip.open('data/pref', 'rb') as file:
         globalvars.PREFERENCES = pickle.load(file)

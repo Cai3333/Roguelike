@@ -48,7 +48,7 @@ def player(player):
     
     pygame.display.update()
     
-    filename = "data\lecacy_" + globalvars.PLAYER.creature.name_instance + '.' + datetime.date.today().strftime('%d%B%Y') + (".txt")
+    filename = "data/legacy/" + globalvars.PLAYER.creature.name_instance + '.' + datetime.date.today().strftime('%d%B%Y') + (".txt")
     
     file_exists = os.path.isfile(filename)
     save_exists = os.path.isfile('data/savegame')
