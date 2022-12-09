@@ -98,7 +98,7 @@ def create():
 
 def place_objects(room_list):
     
-    globalvars.MAX_MONSTERS = generator.from_dungeon_level([[15, 1], [18, 4], [20, 6]])
+    globalvars.MAX_MONSTERS = generator.from_dungeon_level([[40, 1], [18, 4], [20, 6]])
     globalvars.MAX_ITEMS = generator.from_dungeon_level([[5, 1], [8, 4], [10, 6]])
     
     current_level = len(globalvars.GAME.map_previous) + 1
@@ -107,7 +107,6 @@ def place_objects(room_list):
     
     final_level = (current_level == constants.MAP_NUM_LEVELS)
     
-    num_monsters = libtcod.random_get_int(0, globalvars.MAX_MONSTERS // 2 + globalvars.MAX_MONSTERS % 2 > 0, globalvars.MAX_MONSTERS)
     num_items = libtcod.random_get_int(0, globalvars.MAX_ITEMS // 2 + globalvars.MAX_ITEMS % 2 > 0, globalvars.MAX_ITEMS)
     current_monsters = 0
     current_items = 0
@@ -137,7 +136,7 @@ def place_objects(room_list):
         y = libtcod.random_get_int(0, room.y1, room.y2 -1)
         
         if (x, y) != (globalvars.PLAYER.x, globalvars.PLAYER.y):
-            if current_monsters < num_monsters:
+            if current_monsters < globalvars.MAX_MONSTERS:
                 generator.enemy((x, y))
                 current_monsters += 1
             
