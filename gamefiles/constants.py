@@ -19,9 +19,9 @@ CELL_HEIGHT =32
 GAME_FPS = 60
 
 # Map limitations
-MAP_WIDTH = 20
-MAP_HEIGHT = 20
-MAP_MAX_NUM_ROOMS = 10
+MAP_WIDTH = 60
+MAP_HEIGHT = 60
+MAP_MAX_NUM_ROOMS = 20
 MAP_NUM_LEVELS = 10
 
 # Room limitations
@@ -48,7 +48,7 @@ FOV_LIGHT_WALLS = True        # Does the FOV shine on the walls?
 TORCH_RADIUS = 10             # Sight radius for FOV
 
 # MESSAGE DEFAULT
-NUM_MESSAGES = 6
+NUM_MESSAGES = 5
 
 # FONTS #
 FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix.ttf", 16)

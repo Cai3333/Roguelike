@@ -98,7 +98,7 @@ def create():
 
 def place_objects(room_list):
     
-    globalvars.MAX_MONSTERS = generator.from_dungeon_level([[5, 1], [8, 4], [10, 6]])
+    globalvars.MAX_MONSTERS = generator.from_dungeon_level([[15, 1], [18, 4], [20, 6]])
     globalvars.MAX_ITEMS = generator.from_dungeon_level([[5, 1], [8, 4], [10, 6]])
     
     current_level = len(globalvars.GAME.map_previous) + 1

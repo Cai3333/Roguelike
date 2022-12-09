@@ -283,11 +283,11 @@ def enemy(coords):
     
     monster_chances = {}
     
-    monster_chances['cobra'] = from_dungeon_level([[5, 2], [10, 4], [30, 6], [50, 8]])
+    monster_chances['cobra'] = from_dungeon_level([[60, 2], [40, 4], [40, 6], [40, 8]])
     
-    monster_chances['mouse'] = from_dungeon_level([[65, 1], [55, 3], [40, 6], [20, 8]])
+    monster_chances['mouse'] = from_dungeon_level([[10, 1], [20, 3], [25, 6], [25, 8]])
     
-    monster_chances['anaconda'] = 30
+    monster_chances['anaconda'] = from_dungeon_level([[10, 1], [20, 3], [30, 6], [80, 8]])
     
     choice = random_choice(monster_chances)
     
