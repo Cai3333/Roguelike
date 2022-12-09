@@ -1,3 +1,6 @@
 __pycache__
 .vscode
-data\*
+data/savegame
+data/legacy
+data/winrecord
+gamefiles/__pycache__
